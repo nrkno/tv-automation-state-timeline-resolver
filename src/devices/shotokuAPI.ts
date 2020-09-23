@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import { Socket } from 'net'
 
-const TIMEOUT = 3000 // ms
+const TIMEOUT = 10000 // ms
 const RETRY_TIMEOUT = 5000 // ms
 
 export class ShotokuAPI extends EventEmitter {
@@ -131,6 +131,10 @@ export class ShotokuAPI extends EventEmitter {
 			this._tcpClient.on('connect', () => {
 				this._setConnected(true)
 			})
+			this._tcpClient.on('data', (data) => {
+				// for debugging purposes, output everything we get back:
+				this.emit('debug', data.toString('hex'))
+			})
 			this._tcpClient.on('close', () => {
 				this._setConnected(false)
 				delete this._tcpClient
@@ -144,7 +148,7 @@ export class ShotokuAPI extends EventEmitter {
 					// disconnection
 					this._setConnected(false)
 				} else {
-					this.emit('error', e)
+					this.emit('error', '_tcpClient error', e)
 				}
 			})
 		}

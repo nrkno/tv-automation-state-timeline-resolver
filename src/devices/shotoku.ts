@@ -60,7 +60,8 @@ export class ShotokuDevice extends DeviceWithState<TimelineState> implements IDe
 			return this.getCurrentTime()
 		}, SendMode.BURST, this._deviceOptions)
 		this._shotoku = new ShotokuAPI()
-		this._shotoku.on('error', (info, e) => this.emit(e, info))
+		this._shotoku.on('error', (info, e) => this.emit('error', e, info))
+		this._shotoku.on('debug', (...args) => this.emit('debug', 'shotokuAPI', ...args))
 		this.handleDoOnTime(this._doOnTime, 'OSC')
 	}
 	async init (initOptions: ShotokuOptions): Promise<boolean> {
