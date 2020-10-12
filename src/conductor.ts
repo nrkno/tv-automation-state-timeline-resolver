@@ -40,6 +40,7 @@ import PQueue from 'p-queue'
 import * as PAll from 'p-all'
 import PTimeout from 'p-timeout'
 import { ShotokuDevice, DeviceOptionsShotokuInternal } from './devices/shotoku'
+import { SonyMVSDevice, DeviceOptionsSonyMvsInternal } from './devices/sonyMVS'
 
 export { DeviceContainer }
 export { CommandWithContext }
@@ -409,6 +410,15 @@ export class Conductor extends EventEmitter {
 				newDevice = await new DeviceContainer().create<SisyfosMessageDevice, typeof SisyfosMessageDevice>(
 					'../../dist/devices/sisyfos.js',
 					SisyfosMessageDevice,
+					deviceId,
+					deviceOptions,
+					getCurrentTime,
+					threadedClassOptions
+				)
+			} else if (deviceOptions.type === DeviceType.SONYMVS) {
+				newDevice = await new DeviceContainer().create<SonyMVSDevice, typeof SonyMVSDevice>(
+					'../../dist/devices/sonyMvs.js',
+					SonyMVSDevice,
 					deviceId,
 					deviceOptions,
 					getCurrentTime,
@@ -1166,6 +1176,7 @@ export type DeviceOptionsAnyInternal = (
 	DeviceOptionsSingularLiveInternal |
 	DeviceOptionsVMixInternal |
 	DeviceOptionsShotokuInternal |
+	DeviceOptionsSonyMvsInternal |
 	DeviceOptionsVizMSEInternal |
 	DeviceOptionsSingularLiveInternal |
 	DeviceOptionsVizMSEInternal

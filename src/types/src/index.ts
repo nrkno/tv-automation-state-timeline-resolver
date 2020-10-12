@@ -9,6 +9,7 @@ export * from './osc'
 export * from './pharos'
 export * from './panasonicPTZ'
 export * from './sisyfos'
+export * from './sonyMVS'
 export * from './quantel'
 export * from './shotoku'
 export * from './tcpSend'
@@ -34,6 +35,7 @@ import { TSRTimelineObjProps } from './mapping'
 import { TimelineObjQuantelAny } from './quantel'
 import { TimelineObjShotoku } from './shotoku'
 import { TimelineObjSisyfosAny } from './sisyfos'
+import { TimelineObjSonyMVS } from './sonyMVS'
 import { TimelineObjVIZMSEAny } from './vizMSE'
 import { TimelineObjSingularLiveAny } from './singularLive'
 import { TimelineObjVMixAny } from './vmix'
@@ -61,6 +63,7 @@ export enum DeviceType {
 	VIZMSE = 13,
 	SINGULAR_LIVE = 14,
 	SHOTOKU = 15,
+	SONYMVS = 16,
 	VMIX = 20
 }
 
@@ -108,6 +111,7 @@ export type TSRTimelineObj = (
 	TimelineObjQuantelAny |
 	TimelineObjShotoku |
 	TimelineObjSisyfosAny |
+	TimelineObjSonyMVS |
 	TimelineObjSingularLiveAny |
 	TimelineObjVMixAny |
 	TimelineObjVIZMSEAny |

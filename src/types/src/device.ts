@@ -18,6 +18,7 @@ import {
 	VMixOptions
 } from '.'
 import { ShotokuOptions } from './shotoku'
+import { SonyMVSOptions } from './sonyMVS'
 
 export interface DeviceOptionsBase extends SlowReportOptions {
 	type: DeviceType
@@ -52,7 +53,8 @@ export type DeviceOptionsAny = DeviceOptionsAbstract |
 	DeviceOptionsVMix |
 	DeviceOptionsVizMSE |
 	DeviceOptionsSingularLive |
-	DeviceOptionsShotoku
+	DeviceOptionsShotoku |
+	DeviceOptionsSonyMVS
 
 export type DeviceInitOptions = AbstractOptions |
 	CasparCGOptions |
@@ -135,6 +137,10 @@ export interface DeviceOptionsSingularLive extends DeviceOptionsBase {
 export interface DeviceOptionsShotoku extends DeviceOptionsBase {
 	type: DeviceType.SHOTOKU
 	options: ShotokuOptions
+}
+export interface DeviceOptionsSonyMVS extends DeviceOptionsBase {
+	type: DeviceType.SONYMVS
+	options: SonyMVSOptions
 }
 
 export interface DeviceOptionsVMix extends DeviceOptionsBase {
