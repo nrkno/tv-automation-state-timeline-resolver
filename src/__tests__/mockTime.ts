@@ -1,6 +1,12 @@
+const orgSetTimeout = setTimeout
 export class MockTime {
 	private _now: number = 10000
 	private _hasBeeninit: boolean = false
+	static sleep (duration: number): Promise<void> {
+		return new Promise(resolve => {
+			orgSetTimeout(resolve, duration)
+		})
+	}
 	mockDateNow () {
 		Date.now = jest.fn(() => {
 			return this.getCurrentTime()

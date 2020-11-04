@@ -130,6 +130,10 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 			active: this.isActive
 		}
 	}
+	__testOnlyKillProcess (code = 0) {
+		// To be used in unit tests to force the child process to be killed
+		process.exit(code)
+	}
 	/**
 	 * Add commands to queue, to be executed at the right time
 	 */

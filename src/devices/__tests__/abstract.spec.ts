@@ -190,4 +190,50 @@ describe('Abstract device', () => {
 
 		expect(onError).toHaveBeenCalledTimes(0)
 	})
+	test('Abstract restart', async () => {
+
+		let myConductor = new Conductor({
+			initializeAsClear: true,
+			getCurrentTime: mockTime.getCurrentTime
+		})
+		await myConductor.init()
+		await myConductor.addDevice('myAbstract', {
+			type: DeviceType.ABSTRACT,
+			options: {},
+			isMultiThreaded: true
+		})
+		await mockTime.advanceTimeToTicks(10100)
+
+		let deviceContainer = myConductor.getDevice('myAbstract')
+		let device = deviceContainer.device as ThreadedClass<AbstractDevice>
+
+		device.terminate = jest.fn(device.terminate)
+		let onError = jest.fn()
+		let onDebug = jest.fn()
+		device.on('error', onError).catch(() => null)
+		device.on('debug', onDebug).catch(() => null)
+
+		expect(await device.getStatus()).toMatchObject({
+			statusCode: StatusCode.GOOD
+		})
+
+		let err
+		device.__testOnlyKillProcess()
+		.catch(e => {
+			err = e.toString()
+		})
+
+		await MockTime.sleep(100)
+		console.log(err)
+		expect(err).toBeTruthy()
+		// "Error: Method aborted due to: Child process "Child_ instance_1_myAbstract" was closed"
+		expect(err).toMatch(/Method aborted due to.*was closed/i)
+
+		// After a bit, the process should have restarted:
+		await MockTime.sleep(500)
+
+		expect(await device.getStatus()).toMatchObject({
+			statusCode: StatusCode.GOOD
+		})
+	})
 })
