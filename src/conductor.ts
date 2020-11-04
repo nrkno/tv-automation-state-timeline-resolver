@@ -290,10 +290,8 @@ export class Conductor extends EventEmitter {
 					deviceOptions,
 					getCurrentTime,
 					{
-						threadUsage: deviceOptions.isMultiThreaded ? .1 : 0,
-						autoRestart: false,
-						disableMultithreading: !deviceOptions.isMultiThreaded,
-						instanceName: deviceId
+						...threadedClassOptions,
+						threadUsage: deviceOptions.isMultiThreaded ? .1 : 0
 					}
 				)
 			} else if (deviceOptions.type === DeviceType.CASPARCG) {
