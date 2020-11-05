@@ -1,6 +1,4 @@
-{ /* Note: This config is not what's used when building (that's tsconfig.build.json) */
-	"extends": "./config/tsconfig.base",
-	"exclude": [
-		"node_modules/**"
-	],
+{
+	"extends": "@sofie-automation/code-standard-preset/ts/tsconfig.lib",
+	"exclude": ["node_modules/**"]
 }

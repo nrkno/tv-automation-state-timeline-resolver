@@ -1,0 +1,8 @@
+node_modules
+/dist
+/test
+
+/coverage
+/docs
+
+yarn.lock

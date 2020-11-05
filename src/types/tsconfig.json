@@ -1,16 +1,9 @@
 {
-	"extends": "../../config/tsconfig.base",
+	"extends": "../../node_modules/@sofie-automation/code-standard-preset/ts/tsconfig.lib",
 	"compilerOptions": {
 		"target": "es6", // Still needed by core for now
+		"baseUrl": "./"
 	},
-	"exclude": [
-	  "node_modules/**",
-	  "**/*spec.ts",
-	  "**/__mocks__/*",
-	  "**/__tests__/*"
-	],
-	"include": [
-	  "./**/*.ts"
-	]
-  }
-  
+	"exclude": ["node_modules/**", "**/*spec.ts", "**/__mocks__/*", "**/__tests__/*"],
+	"include": ["./**/*.ts"]
+}
