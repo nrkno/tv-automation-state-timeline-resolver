@@ -2,17 +2,17 @@ import { Mapping } from './mapping'
 import { TSRTimelineObjBase, DeviceType } from '.'
 
 export type MappingVMixAny =
-	MappingVMixProgram |
-	MappingVMixPreview |
-	MappingVMixInput |
-	MappingVMixAudioChannel |
-	MappingVMixOutput |
-	MappingVMixOverlay |
-	MappingVMixRecording |
-	MappingVMixStreaming |
-	MappingVMixExternal |
-	MappingVMixFadeToBlack |
-	MappingVMixFader
+	| MappingVMixProgram
+	| MappingVMixPreview
+	| MappingVMixInput
+	| MappingVMixAudioChannel
+	| MappingVMixOutput
+	| MappingVMixOverlay
+	| MappingVMixRecording
+	| MappingVMixStreaming
+	| MappingVMixExternal
+	| MappingVMixFadeToBlack
+	| MappingVMixFader
 
 export interface MappingVMix extends Mapping {
 	device: DeviceType.VMIX
@@ -99,11 +99,11 @@ export enum MappingVMixType {
 	Streaming = 7,
 	External = 8,
 	FadeToBlack = 9,
-	Fader = 10
+	Fader = 10,
 }
 
 export interface VMixOptions {
-	host: string,
+	host: string
 	port: number
 }
 
@@ -141,21 +141,21 @@ export enum VMixCommand {
 	STOP_EXTERNAL = 'STOP_EXTERNAL',
 	OVERLAY_INPUT_IN = 'OVERLAY_INPUT_IN',
 	OVERLAY_INPUT_OUT = 'OVERLAY_INPUT_OUT',
-	SET_INPUT_OVERLAY = 'SET_INPUT_OVERLAY'
+	SET_INPUT_OVERLAY = 'SET_INPUT_OVERLAY',
 }
 
 export type TimelineObjVMixAny =
-	TimelineObjVMixProgram |
-	TimelineObjVMixPreview |
-	TimelineObjVMixAudio |
-	TimelineObjVMixFader |
-	TimelineObjVMixRecording |
-	TimelineObjVMixStreaming |
-	TimelineObjVMixExternal |
-	TimelineObjVMixFadeToBlack |
-	TimelineObjVMixOutput |
-	TimelineObjVMixOverlay |
-	TimelineObjVMixInput
+	| TimelineObjVMixProgram
+	| TimelineObjVMixPreview
+	| TimelineObjVMixAudio
+	| TimelineObjVMixFader
+	| TimelineObjVMixRecording
+	| TimelineObjVMixStreaming
+	| TimelineObjVMixExternal
+	| TimelineObjVMixFadeToBlack
+	| TimelineObjVMixOutput
+	| TimelineObjVMixOverlay
+	| TimelineObjVMixInput
 
 export enum TimelineContentTypeVMix {
 	PROGRAM = 'PROGRAM',
@@ -168,7 +168,7 @@ export enum TimelineContentTypeVMix {
 	INPUT = 'INPUT',
 	OUTPUT = 'OUTPUT',
 	EXTERNAL = 'EXTERNAL',
-	OVERLAY = 'OVERLAY'
+	OVERLAY = 'OVERLAY',
 }
 export interface TimelineObjVMixBase extends TSRTimelineObjBase {
 	content: {
@@ -205,7 +205,7 @@ export interface TimelineObjVMixPreview extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixAudio extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
+		deviceType: DeviceType.VMIX
 		type: TimelineContentTypeVMix.AUDIO
 
 		/** Channel volume (0 - 100) */
@@ -230,8 +230,8 @@ export interface TimelineObjVMixAudio extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixFader extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
-		type: TimelineContentTypeVMix.FADER,
+		deviceType: DeviceType.VMIX
+		type: TimelineContentTypeVMix.FADER
 
 		/** Position of the transition fader (0 - 255) */
 		position: number
@@ -240,7 +240,7 @@ export interface TimelineObjVMixFader extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixStreaming extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
+		deviceType: DeviceType.VMIX
 		type: TimelineContentTypeVMix.STREAMING
 
 		/** If streaming should be turned on */
@@ -250,7 +250,7 @@ export interface TimelineObjVMixStreaming extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixRecording extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
+		deviceType: DeviceType.VMIX
 		type: TimelineContentTypeVMix.RECORDING
 
 		/** If recording should be turned on */
@@ -310,7 +310,7 @@ export interface TimelineObjVMixOutput extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixExternal extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
+		deviceType: DeviceType.VMIX
 		type: TimelineContentTypeVMix.EXTERNAL
 
 		/** If external should be turned on */
@@ -320,7 +320,7 @@ export interface TimelineObjVMixExternal extends TimelineObjVMixBase {
 
 export interface TimelineObjVMixOverlay extends TimelineObjVMixBase {
 	content: {
-		deviceType: DeviceType.VMIX,
+		deviceType: DeviceType.VMIX
 		type: TimelineContentTypeVMix.OVERLAY
 
 		/** Input number or name */
@@ -343,7 +343,7 @@ export interface VMixTransform {
 }
 
 export interface VMixInputOverlays {
-	[index: number]: number | string
+	[index: string]: number | string
 }
 
 export interface VMixTransition {
@@ -373,7 +373,7 @@ export enum VMixTransitionType {
 	VerticalWipeReverse = 'VerticalWipeReverse',
 	VerticalSlideReverse = 'VerticalSlideReverse',
 	Stinger1 = 'Stinger1',
-	Stinger2 = 'Stinger2'
+	Stinger2 = 'Stinger2',
 }
 
 export enum VMixInputType {
@@ -383,5 +383,5 @@ export enum VMixInputType {
 	Xaml = 'Xaml',
 	AudioFile = 'AudioFile',
 	Flash = 'Flash',
-	PowerPoint = 'PowerPoint'
+	PowerPoint = 'PowerPoint',
 }

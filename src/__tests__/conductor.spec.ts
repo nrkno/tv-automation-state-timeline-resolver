@@ -6,18 +6,19 @@ import {
 	TSRTimeline,
 	LawoDeviceMode,
 	MappingCasparCG,
-	TimelineContentTypeCasparCg
+	TimelineContentTypeCasparCg,
 } from '../types/src'
 import { Conductor, TimelineTriggerTimeResult } from '../conductor'
-import * as _ from 'underscore'
+import _ from 'underscore'
 import { MockTime } from './mockTime'
 import { ThreadedClass } from 'threadedclass'
 import { AbstractDevice } from '../devices/abstract'
 import { getMockCall } from './lib'
 import { setupAllMocks } from '../__mocks__/_setup-all-mocks'
+import { TimelineEnable } from 'superfly-timeline'
 
 describe('Conductor', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 	beforeAll(() => {
 		setupAllMocks()
 		mockTime.mockDateNow()
@@ -26,7 +27,6 @@ describe('Conductor', () => {
 		mockTime.init()
 	})
 	test('Test Abstract-device functionality', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
@@ -34,70 +34,70 @@ describe('Conductor', () => {
 			return Promise.resolve()
 		})
 
-		let myLayerMapping0: MappingAbstract = {
+		const myLayerMapping0: MappingAbstract = {
 			device: DeviceType.ABSTRACT,
-			deviceId: 'device0'
+			deviceId: 'device0',
 		}
-		let myLayerMapping1: MappingAbstract = {
+		const myLayerMapping1: MappingAbstract = {
 			device: DeviceType.ABSTRACT,
-			deviceId: 'device1'
+			deviceId: 'device1',
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0,
-			'myLayer1': myLayerMapping1
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
+			myLayer1: myLayerMapping1,
 		}
 
-		let conductor = new Conductor({
+		const conductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 
 		await conductor.init()
 		await conductor.addDevice('device0', {
 			type: DeviceType.ABSTRACT,
 			options: {
-				commandReceiver: commandReceiver0
-			}
+				commandReceiver: commandReceiver0,
+			},
 		})
 		await conductor.addDevice('device1', {
 			type: DeviceType.ABSTRACT,
 			options: {
-				commandReceiver: commandReceiver1
-			}
+				commandReceiver: commandReceiver1,
+			},
 		})
 
 		// add something that will play in a seconds time
-		let abstractThing0: TSRTimelineObj = {
+		const abstractThing0: TSRTimelineObj = {
 			id: 'a0',
 			enable: {
 				start: mockTime.now,
-				duration: 1000
+				duration: 1000,
 			},
 			layer: 'myLayer0',
 			content: {
 				deviceType: DeviceType.ABSTRACT,
 				myAttr1: 'one',
-				myAttr2: 'two'
-			}
+				myAttr2: 'two',
+			},
 		}
-		let abstractThing1: TSRTimelineObj = {
+		const abstractThing1: TSRTimelineObj = {
 			id: 'a1',
 			enable: {
 				start: mockTime.now + 1000,
-				duration: 1000
+				duration: 1000,
 			},
 			layer: 'myLayer1',
 			content: {
 				deviceType: DeviceType.ABSTRACT,
 				myAttr1: 'three',
-				myAttr2: 'four'
-			}
+				myAttr2: 'four',
+			},
 		}
 
-		let device0Container = conductor.getDevice('device0')
-		let device0 = device0Container.device
-		let device1Container = conductor.getDevice('device1')
-		let device1 = device1Container.device
+		const device0Container = conductor.getDevice('device0')
+		const device0 = device0Container.device
+		const device1Container = conductor.getDevice('device1')
+		const device1 = device1Container.device
 
 		// The queues should be empty
 		expect(await device0['queue']).toHaveLength(0)
@@ -120,9 +120,8 @@ describe('Conductor', () => {
 			content: {
 				deviceType: 0, // abstract
 				myAttr1: 'one',
-				myAttr2: 'two'
-			}
-
+				myAttr2: 'two',
+			},
 		})
 		expect(getMockCall(commandReceiver0, 0, 2)).toEqual('added: a0') // context
 		expect(commandReceiver1).toHaveBeenCalledTimes(0)
@@ -139,8 +138,8 @@ describe('Conductor', () => {
 			content: {
 				deviceType: 0, // abstract
 				myAttr1: 'one',
-				myAttr2: 'two'
-			}
+				myAttr2: 'two',
+			},
 		})
 		expect(getMockCall(commandReceiver0, 0, 2)).toEqual('removed: a0') // context
 		expect(commandReceiver1).toHaveBeenCalledTimes(1)
@@ -150,8 +149,8 @@ describe('Conductor', () => {
 			content: {
 				deviceType: 0, // abstract
 				myAttr1: 'three',
-				myAttr2: 'four'
-			}
+				myAttr2: 'four',
+			},
 		})
 
 		commandReceiver0.mockClear()
@@ -166,78 +165,76 @@ describe('Conductor', () => {
 			content: {
 				deviceType: 0, // abstract
 				myAttr1: 'three',
-				myAttr2: 'four'
-			}
+				myAttr2: 'four',
+			},
 		})
 		expect(getMockCall(commandReceiver1, 0, 2)).toEqual('removed: a1') // context
 
 		await conductor.removeDevice('device1')
 		expect(conductor.getDevice('device1')).toBeFalsy()
 
-		await conductor.addDevice(
-			'device1',
-			{ type: DeviceType.ABSTRACT, options: { commandReceiver: commandReceiver1 } }
-		).then((res) => {
-			expect(res).toBeTruthy()
-		})
-
-		// @ts-ignore
-		abstractThing0.enable.start = mockTime.now
-		conductor.setTimelineAndMappings([ abstractThing0 ], {
-			'myLayer0': myLayerMapping1,
-			'myLayer1': myLayerMapping0
+		await conductor
+			.addDevice('device1', { type: DeviceType.ABSTRACT, options: { commandReceiver: commandReceiver1 } })
+			.then((res) => {
+				expect(res).toBeTruthy()
+			})
+		;(abstractThing0.enable as TimelineEnable).start = mockTime.now
+		conductor.setTimelineAndMappings([abstractThing0], {
+			myLayer0: myLayerMapping1,
+			myLayer1: myLayerMapping0,
 		})
 		if (_.isArray(abstractThing0.enable)) throw new Error('.enable should not be an array')
 		abstractThing0.enable.start = mockTime.now
-		conductor.setTimelineAndMappings([ abstractThing0 ])
+		conductor.setTimelineAndMappings([abstractThing0])
 	})
 
 	test('Test the "Now" and "Callback-functionality', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
 
-		let myLayerMapping0: MappingAbstract = {
+		const myLayerMapping0: MappingAbstract = {
 			device: DeviceType.ABSTRACT,
-			deviceId: 'device0'
+			deviceId: 'device0',
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let conductor = new Conductor({
+		const conductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 
 		await conductor.init()
 		await conductor.addDevice('device0', {
 			type: DeviceType.ABSTRACT,
 			options: {
-				commandReceiver: commandReceiver0
-			}
+				commandReceiver: commandReceiver0,
+			},
 		})
 
 		// add something that will play "now"
-		let abstractThing0: TSRTimelineObj = { // will be converted from "now" to 10000
+		const abstractThing0: TSRTimelineObj = {
+			// will be converted from "now" to 10000
 			id: 'a0',
 			enable: {
 				start: 'now', // 10000
-				duration: 5000 // 15000
+				duration: 5000, // 15000
 			},
 			layer: 'myLayer0',
 			content: {
 				deviceType: DeviceType.ABSTRACT,
 				myAttr1: 'one',
-				myAttr2: 'two'
-			}
+				myAttr2: 'two',
+			},
 		}
-		let abstractThing1: TSRTimelineObj = { // will cause a callback to be sent
+		const abstractThing1: TSRTimelineObj = {
+			// will cause a callback to be sent
 			id: 'a1',
 			enable: {
 				start: '#a0.start + 300', // 10300
-				duration: 5000 // 15300
+				duration: 5000, // 15300
 			},
 			layer: 'myLayer0',
 			content: {
@@ -246,16 +243,16 @@ describe('Conductor', () => {
 				myAttr2: 'two',
 				callBack: 'abc',
 				callBackData: {
-					hello: 'dude'
+					hello: 'dude',
 				},
-				callBackStopped: 'abcStopped'
-			}
+				callBackStopped: 'abcStopped',
+			},
 		}
-		let timeline: TSRTimeline = [abstractThing0, abstractThing1]
+		const timeline: TSRTimeline = [abstractThing0, abstractThing1]
 
-		let setTimelineTriggerTime = jest.fn((results: TimelineTriggerTimeResult) => {
+		const setTimelineTriggerTime = jest.fn((results: TimelineTriggerTimeResult) => {
 			_.each(results, (trigger) => {
-				let o = _.findWhere(timeline, { id: trigger.id })
+				const o = _.findWhere(timeline, { id: trigger.id })
 				if (o) {
 					if (_.isArray(o.enable)) throw new Error('.enable should not be an array')
 					o.enable.start = trigger.time
@@ -266,11 +263,11 @@ describe('Conductor', () => {
 		})
 		conductor.on('setTimelineTriggerTime', setTimelineTriggerTime)
 
-		let timelineCallback = jest.fn()
+		const timelineCallback = jest.fn()
 		conductor.on('timelineCallback', timelineCallback)
 
-		let device0Container = conductor.getDevice('device0')
-		let device0 = device0Container.device as ThreadedClass<AbstractDevice>
+		const device0Container = conductor.getDevice('device0')
+		const device0 = device0Container.device as ThreadedClass<AbstractDevice>
 		expect(device0).toBeTruthy()
 		// let device1 = conductor.getDevice('device1')
 
@@ -334,45 +331,45 @@ describe('Conductor', () => {
 		const commandReceiver4 = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let conductor = new Conductor({
+		const conductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 
 		await conductor.init()
 		await conductor.addDevice('device0', {
 			type: DeviceType.ABSTRACT,
 			options: {
-				commandReceiver: commandReceiver0
-			}
+				commandReceiver: commandReceiver0,
+			},
 		})
 		await conductor.addDevice('device1', {
 			type: DeviceType.CASPARCG,
 			options: {
 				commandReceiver: commandReceiver1,
-				host: '127.0.0.1'
-			}
+				host: '127.0.0.1',
+			},
 		})
 		await conductor.addDevice('device2', {
 			type: DeviceType.ATEM,
 			options: {
 				commandReceiver: commandReceiver2,
-				host: '127.0.0.1'
-			}
+				host: '127.0.0.1',
+			},
 		})
 		await conductor.addDevice('device3', {
 			type: DeviceType.HTTPSEND,
 			options: {
-				commandReceiver: commandReceiver3
-			}
+				commandReceiver: commandReceiver3,
+			},
 		})
 		await conductor.addDevice('device4', {
 			type: DeviceType.LAWO,
 			options: {
 				commandReceiver: commandReceiver4,
 
-				deviceMode: LawoDeviceMode.Ruby
-			}
+				deviceMode: LawoDeviceMode.Ruby,
+			},
 		})
 
 		await conductor.devicesMakeReady(true)
@@ -399,30 +396,30 @@ describe('Conductor', () => {
 
 		expect(getMockCall(commandReceiver1, 0, 1).name).toEqual('ClearCommand')
 		expect(getMockCall(commandReceiver1, 0, 1)._objectParams).toMatchObject({
-			channel: 1
+			channel: 1,
 		})
 		expect(getMockCall(commandReceiver1, 1, 1).name).toEqual('ClearCommand')
 		expect(getMockCall(commandReceiver1, 1, 1)._objectParams).toMatchObject({
-			channel: 2
+			channel: 2,
 		})
 		expect(getMockCall(commandReceiver1, 2, 1).name).toEqual('ClearCommand')
 		expect(getMockCall(commandReceiver1, 2, 1)._objectParams).toMatchObject({
-			channel: 3
+			channel: 3,
 		})
 	})
 
 	test('Construction of multithreaded device', async () => {
 		const myLayerMapping0: MappingAbstract = {
 			device: DeviceType.ABSTRACT,
-			deviceId: 'device0'
+			deviceId: 'device0',
 		}
 		const myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+			myLayer0: myLayerMapping0,
 		}
 
 		const conductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		conductor.on('error', console.error)
 
@@ -430,7 +427,7 @@ describe('Conductor', () => {
 		await conductor.addDevice('device0', {
 			type: DeviceType.ABSTRACT,
 			options: {},
-			isMultiThreaded: true
+			isMultiThreaded: true,
 		})
 		conductor.setTimelineAndMappings([], myLayerMapping)
 
@@ -442,19 +439,19 @@ describe('Conductor', () => {
 			return Promise.resolve()
 		})
 
-		let myLayerMapping0: MappingCasparCG = {
+		const myLayerMapping0: MappingCasparCG = {
 			device: DeviceType.CASPARCG,
 			deviceId: 'device0',
 			channel: 1,
-			layer: 10
+			layer: 10,
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let conductor = new Conductor({
+		const conductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 
 		await conductor.init()
@@ -462,33 +459,34 @@ describe('Conductor', () => {
 			type: DeviceType.CASPARCG,
 			options: {
 				commandReceiver: commandReceiver0,
-				host: '127.0.0.1'
-			}
+				host: '127.0.0.1',
+			},
 		})
 		conductor.setTimelineAndMappings([], myLayerMapping)
 
 		await mockTime.advanceTimeTicks(10) // just a little bit
 
 		// add something that will play "now"
-		let video0: TSRTimelineObj = { // will be converted from "now" to 10000
+		const video0: TSRTimelineObj = {
+			// will be converted from "now" to 10000
 			id: 'a0',
 			enable: {
 				start: 'now', // 10000
-				duration: 10000 // 20000
+				duration: 10000, // 20000
 			},
 			layer: 'myLayer0',
 			content: {
 				deviceType: DeviceType.CASPARCG,
 				type: TimelineContentTypeCasparCg.MEDIA,
 
-				file: 'AMB'
-			}
+				file: 'AMB',
+			},
 		}
 
-		let timeline: TSRTimeline = [video0]
+		const timeline: TSRTimeline = [video0]
 
-		let device0Container = conductor.getDevice('device0')
-		let device0 = device0Container.device as ThreadedClass<AbstractDevice>
+		const device0Container = conductor.getDevice('device0')
+		const device0 = device0Container.device as ThreadedClass<AbstractDevice>
 		expect(device0).toBeTruthy()
 
 		// The queues should be empty
@@ -507,8 +505,8 @@ describe('Conductor', () => {
 			_objectParams: {
 				clip: 'AMB',
 				channel: 1,
-				layer: 10
-			}
+				layer: 10,
+			},
 		})
 
 		commandReceiver0.mockClear()
@@ -525,27 +523,27 @@ describe('Conductor', () => {
 			_objectParams: {
 				// clip: 'AMB',
 				channel: 1,
-				layer: 10
-			}
+				layer: 10,
+			},
 		})
 		expect(getMockCall(commandReceiver0, 1, 1).name).toEqual('PlayCommand')
 		expect(getMockCall(commandReceiver0, 1, 1)).toMatchObject({
 			_objectParams: {
 				clip: 'AMB',
 				channel: 1,
-				layer: 20
-			}
+				layer: 20,
+			},
 		})
 
 		commandReceiver0.mockClear()
 
 		// Replace the mapping altogether:
 		delete myLayerMapping['myLayer0']
-		let myLayerMappingNew: MappingCasparCG = {
+		const myLayerMappingNew: MappingCasparCG = {
 			device: DeviceType.CASPARCG,
 			deviceId: 'device0',
 			channel: 2,
-			layer: 10
+			layer: 10,
 		}
 		myLayerMapping['myLayerNew'] = myLayerMappingNew
 		video0.layer = 'myLayerNew'
@@ -564,8 +562,8 @@ describe('Conductor', () => {
 				_objectParams: {
 					clip: 'AMB',
 					channel: 2,
-					layer: 10
-				}
+					layer: 10,
+				},
 			})
 		} else {
 			expect(commandReceiver0).toHaveBeenCalledTimes(2)
@@ -573,8 +571,8 @@ describe('Conductor', () => {
 			expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 				_objectParams: {
 					channel: 1,
-					layer: 20
-				}
+					layer: 20,
+				},
 			})
 
 			expect(getMockCall(commandReceiver0, 1, 1).name).toEqual('PlayCommand')
@@ -582,10 +580,9 @@ describe('Conductor', () => {
 				_objectParams: {
 					clip: 'AMB',
 					channel: 2,
-					layer: 10
-				}
+					layer: 10,
+				},
 			})
-
 		}
 	})
 })

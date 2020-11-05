@@ -26,7 +26,7 @@ export enum TimelineContentTypeTcp {
 	GET = 'get',
 	POST = 'post',
 	PUT = 'put',
-	DELETE = 'delete'
+	DELETE = 'delete',
 }
 
 export type TimelineObjTCPSendAny = TimelineObjTCPRequest

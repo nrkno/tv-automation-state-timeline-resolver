@@ -5,10 +5,10 @@
 		"outDir": "./dist",
 		"baseUrl": "./",
 		"paths": {
-			"*": ["./node_modules/*",
-				"../src/types/*"],
+			"*": ["./node_modules/*", "../src/types/*"],
 			"timeline-state-resolver": ["./src/index.ts"],
 			"types": ["node", "jest"]
-		}
+		},
+		"esModuleInterop": true
 	}
 }

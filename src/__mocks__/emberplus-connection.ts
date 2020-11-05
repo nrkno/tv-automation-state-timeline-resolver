@@ -1,66 +1,65 @@
-
 // mock emberplus-connection
 import { EventEmitter } from 'events'
 
 export { Model, Types } from 'emberplus-connection'
 
-let mockDo = jest.fn()
+const mockDo = jest.fn()
 
-let instances: Array<EmberClient> = []
+const instances: Array<EmberClient> = []
 
 export class EmberClient extends EventEmitter {
 	tree = {}
 	onConnected: () => void
 
-	constructor () {
+	constructor() {
 		super()
 
 		setTimeout(() => {
 			// simulate that we're connected
 			this.emit('connected')
-		},10)
+		}, 10)
 
 		instances.push(this)
 	}
 
-	async connect () {
+	async connect() {
 		this.emit('connected')
 	}
-	async disconnect () {
+	async disconnect() {
 		this.emit('disconnected')
 	}
-	discard () {
+	discard() {
 		// empty block
 	}
 
-	async getDirectory () {
+	async getDirectory() {
 		return { response: Promise.resolve() }
 	}
-	async expand () {
+	async expand() {
 		return {
-			result: Promise.resolve()
+			result: Promise.resolve(),
 		}
 	}
-	async getElementByPath (p) {
+	async getElementByPath(p) {
 		return {
 			path: p,
 			contents: {
 				parameterType: 'PARAMETER',
-				value: 0
-			}
+				value: 0,
+			},
 		}
 	}
-	async setValue () {
+	async setValue() {
 		return {
 			sentOk: true,
-			response: Promise.resolve()
+			response: Promise.resolve(),
 		}
 	}
 
-	static get mockDo () {
+	static get mockDo() {
 		return mockDo
 	}
-	static get instances () {
+	static get instances() {
 		return instances
 	}
 }

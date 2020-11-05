@@ -9,7 +9,7 @@ export enum MappingPanasonicPtzType {
 	PRESET_SPEED = 0,
 	PRESET = 1,
 	ZOOM = 2,
-	ZOOM_SPEED = 3
+	ZOOM_SPEED = 3,
 }
 
 export interface PanasonicPTZOptions {
@@ -22,15 +22,14 @@ export enum TimelineContentTypePanasonicPtz {
 	PRESET = 'presetMem',
 	SPEED = 'presetSpeed',
 	ZOOM_SPEED = 'zoomSpeed',
-	ZOOM = 'zoom'
+	ZOOM = 'zoom',
 }
 
-export type TimelineObjPanasonicPtzAny = (
-	TimelineObjPanasonicPtzZoomSpeed |
-	TimelineObjPanasonicPtzZoom |
-	TimelineObjPanasonicPtzPresetSpeed |
-	TimelineObjPanasonicPtzPreset
-)
+export type TimelineObjPanasonicPtzAny =
+	| TimelineObjPanasonicPtzZoomSpeed
+	| TimelineObjPanasonicPtzZoom
+	| TimelineObjPanasonicPtzPresetSpeed
+	| TimelineObjPanasonicPtzPreset
 export interface TimelineObjPanasonicPtz extends TSRTimelineObjBase {
 	content: {
 		deviceType: DeviceType.PANASONIC_PTZ

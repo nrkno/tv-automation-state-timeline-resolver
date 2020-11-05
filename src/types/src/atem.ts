@@ -2,7 +2,7 @@ import { Mapping } from './mapping'
 import { TSRTimelineObjBase, DeviceType } from '.'
 
 export interface MappingAtem extends Mapping {
-	device: DeviceType.ATEM,
+	device: DeviceType.ATEM
 	mappingType: MappingAtemType
 	index?: number
 }
@@ -14,13 +14,13 @@ export enum MappingAtemType {
 	MediaPlayer,
 	SuperSourceProperties,
 	AudioChannel,
-	MacroPlayer
+	MacroPlayer,
 }
 
 export enum AtemMediaPoolType {
 	Still = 'still',
 	Clip = 'clip',
-	Audio = 'audio'
+	Audio = 'audio',
 }
 
 export interface AtemMediaPoolAsset {
@@ -43,7 +43,7 @@ export enum TimelineContentTypeAtem { //  Atem-state
 	SSRCPROPS = 'ssrcProps',
 	MEDIAPLAYER = 'mp',
 	AUDIOCHANNEL = 'audioChan',
-	MACROPLAYER = 'macroPlayer'
+	MACROPLAYER = 'macroPlayer',
 }
 
 export enum AtemTransitionStyle { // Note: copied from atem-state
@@ -53,29 +53,29 @@ export enum AtemTransitionStyle { // Note: copied from atem-state
 	DVE,
 	STING,
 	CUT,
-	DUMMY
+	DUMMY,
 }
 export enum MediaSourceType { // Note: copied from atem-state
 	Still = 1,
-	Clip = 2
+	Clip = 2,
 }
 
 export type SuperSourceBox = {
-	enabled?: boolean,
-	source?: number,
+	enabled?: boolean
+	source?: number
 	/** -4800 - 4800 */
-	x?: number,
+	x?: number
 	/** -2700 - 2700 */
-	y?: number,
+	y?: number
 	/** 70 - 1000 */
-	size?: number,
-	cropped?: boolean,
+	size?: number
+	cropped?: boolean
 	/** 0 - 18000 */
-	cropTop?: number,
+	cropTop?: number
 	/** 0 - 18000 */
-	cropBottom?: number,
+	cropBottom?: number
 	/** 0 - 32000 */
-	cropLeft?: number,
+	cropLeft?: number
 	/** 0 - 32000 */
 	cropRight?: number
 }
@@ -89,33 +89,32 @@ export interface AtemTransitionSettings {
 	// stinger
 	wipe?: {
 		/** 1 - 250 frames */
-		rate?: number,
+		rate?: number
 		/** 0 - 17 */
-		pattern?: number,
+		pattern?: number
 		/** 0 - 10000 */
-		borderWidth?: number,
-		borderInput?: number,
+		borderWidth?: number
+		borderInput?: number
 		/** 0 - 10000 */
-		symmetry?: number,
+		symmetry?: number
 		/** 0 - 10000 */
-		borderSoftness?: number,
+		borderSoftness?: number
 		/** 0 - 10000 */
-		xPosition?: number,
+		xPosition?: number
 		/** 0 - 10000 */
-		yPosition?: number,
-		reverseDirection?: boolean,
+		yPosition?: number
+		reverseDirection?: boolean
 		flipFlop?: boolean
 	}
 }
-export type TimelineObjAtemAny = (
-	TimelineObjAtemME |
-	TimelineObjAtemDSK |
-	TimelineObjAtemAUX |
-	TimelineObjAtemSsrc |
-	TimelineObjAtemSsrcProps |
-	TimelineObjAtemMacroPlayer |
-	TimelineObjAtemMediaPlayer
-)
+export type TimelineObjAtemAny =
+	| TimelineObjAtemME
+	| TimelineObjAtemDSK
+	| TimelineObjAtemAUX
+	| TimelineObjAtemSsrc
+	| TimelineObjAtemSsrcProps
+	| TimelineObjAtemMacroPlayer
+	| TimelineObjAtemMediaPlayer
 export interface TimelineObjAtemBase extends TSRTimelineObjBase {
 	content: {
 		deviceType: DeviceType.ATEM
@@ -125,60 +124,63 @@ export interface TimelineObjAtemBase extends TSRTimelineObjBase {
 
 // as described in this issue: https://github.com/Microsoft/TypeScript/issues/14094
 type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never }
-type XOR<T, U> = (T | U) extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U
+type XOR<T, U> = T | U extends Record<string, unknown> ? (Without<T, U> & U) | (Without<U, T> & T) : T | U
 
 export interface TimelineObjAtemME extends TimelineObjAtemBase {
 	content: {
 		deviceType: DeviceType.ATEM
 		type: TimelineContentTypeAtem.ME
-		me: XOR<{
-			input: number,
-			transition: AtemTransitionStyle
-		}, {
-			/** Cut directly to program */
-			programInput?: number;
-			/**
-			 * Set preview input.
-			 * Cannot be used in conjunction with `input`;
-			 * `programInput` must be used instead if control of program and preview are both needed.
-			 */
-			previewInput?: number;
-		}> & {
+		me: XOR<
+			{
+				input: number
+				transition: AtemTransitionStyle
+			},
+			{
+				/** Cut directly to program */
+				programInput?: number
+				/**
+				 * Set preview input.
+				 * Cannot be used in conjunction with `input`;
+				 * `programInput` must be used instead if control of program and preview are both needed.
+				 */
+				previewInput?: number
+			}
+		> & {
 			/** Is ME in transition state */
-			inTransition?: boolean;
+			inTransition?: boolean
 			/** Should preview transition */
-			transitionPreview?: boolean;
+			transitionPreview?: boolean
 			/** Position of T-bar */
-			transitionPosition?: number;
+			transitionPosition?: number
 			// transitionFramesLeft?: number;
 			// fadeToBlack?: boolean;
 			// numberOfKeyers?: number;
 			// transitionProperties?: AtemTransitionProperties;
 
 			/** Settings for mix rate, wipe style */
-			transitionSettings?: AtemTransitionSettings,
+			transitionSettings?: AtemTransitionSettings
 
 			upstreamKeyers?: {
-				readonly upstreamKeyerId: number,
+				readonly upstreamKeyerId: number
 				onAir?: boolean
 				/** 0: Luma, 1: Chroma, 2: Pattern, 3: DVE */
-				mixEffectKeyType?: number,
+				mixEffectKeyType?: number
 				/** Use flying key */
-				flyEnabled?: boolean,
+				flyEnabled?: boolean
 				/** Fill */
-				fillSource?: number,
+				fillSource?: number
 				/** Key */
-				cutSource?: number,
+				cutSource?: number
 				/** Mask keyer */
-				maskEnabled?: boolean,
+				maskEnabled?: boolean
 				/** -9000 -> 9000 */
-				maskTop?: number,
+				maskTop?: number
 				/** -9000 -> 9000 */
-				maskBottom?: number,
+				maskBottom?: number
 				/** -16000 -> 16000 */
-				maskLeft?: number,
+				maskLeft?: number
 				/** -16000 -> 16000 */
-				maskRight?: number,
+				maskRight?: number
 
 				// dveSettings: UpstreamKeyerDVESettings;
 				// chromaSettings: UpstreamKeyerChromaSettings;
@@ -187,11 +189,11 @@ export interface TimelineObjAtemME extends TimelineObjAtemBase {
 				// flyProperties: UpstreamKeyerFlySettings;
 				lumaSettings?: {
 					/** Premultiply key */
-					preMultiplied?: boolean,
+					preMultiplied?: boolean
 					/** 0-1000 */
-					clip?: number,
+					clip?: number
 					/** 0-1000 */
-					gain?: number,
+					gain?: number
 					/** Invert key */
 					invert?: boolean
 				}
@@ -204,34 +206,34 @@ export interface TimelineObjAtemDSK extends TimelineObjAtemBase {
 		deviceType: DeviceType.ATEM
 		type: TimelineContentTypeAtem.DSK
 		dsk: {
-			onAir: boolean,
+			onAir: boolean
 			sources?: {
 				/** Fill */
-				fillSource: number,
+				fillSource: number
 				/** Key */
 				cutSource: number
-			},
+			}
 			properties?: {
 				/** On at next transition */
-				tie?: boolean,
+				tie?: boolean
 				/** 1 - 250 frames */
-				rate?: number,
+				rate?: number
 				/** Premultiply key */
-				preMultiply?: boolean,
+				preMultiply?: boolean
 				/** 0 - 1000 */
-				clip?: number,
+				clip?: number
 				/** 0 - 1000 */
-				gain?: number,
+				gain?: number
 				/** Invert key */
-				invert?: boolean,
+				invert?: boolean
 				mask?: {
-					enabled: boolean,
+					enabled: boolean
 					/** -9000 -> 9000 */
-					top?: number,
+					top?: number
 					/** -9000 -> 9000 */
-					bottom?: number,
+					bottom?: number
 					/** -16000 -> 16000 */
-					left?: number,
+					left?: number
 					/** -16000 -> 16000 */
 					right?: number
 				}

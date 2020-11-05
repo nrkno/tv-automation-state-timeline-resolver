@@ -11,12 +11,12 @@ export interface MappingShotoku extends Mapping {
 }
 
 export enum TimelineContentTypeShotoku {
-	SHOT = 'shot'
+	SHOT = 'shot',
 }
 
 export enum ShotokuTransitionType {
 	Cut = 'cut',
-	Fade = 'fade'
+	Fade = 'fade',
 }
 export interface ShotokuCommandContent {
 	shot: number

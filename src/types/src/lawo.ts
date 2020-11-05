@@ -10,7 +10,7 @@ enum ParameterType {
 	Boolean = 'BOOLEAN',
 	Trigger = 'TRIGGER',
 	Enum = 'ENUM',
-	Octets = 'OCTETS'
+	Octets = 'OCTETS',
 }
 
 export interface MappingLawo extends Mapping {
@@ -24,14 +24,14 @@ export enum MappingLawoType {
 	SOURCE = 'source',
 	SOURCES = 'sources', // TODO - naming? can this also be a full path or trigger val?
 	FULL_PATH = 'fullpath',
-	TRIGGER_VALUE = 'triggerValue'
+	TRIGGER_VALUE = 'triggerValue',
 }
 export enum LawoDeviceMode {
 	R3lay,
 	Ruby,
 	RubyManualRamp,
 	MC2,
-	Manual
+	Manual,
 }
 export interface LawoOptions {
 	setValueFn?: SetLawoValueFn
@@ -65,10 +65,15 @@ export enum TimelineContentTypeLawo { //  Lawo-state
 	SOURCE = 'lawosource', // a general content type, possibly to be replaced by specific ones later?
 	SOURCES = 'lawosources',
 	EMBER_PROPERTY = 'lawofullpathemberproperty',
-	TRIGGER_VALUE = 'triggervalue'
+	TRIGGER_VALUE = 'triggervalue',
 }
 
-export type TimelineObjLawoAny = TimelineObjLawoSources | TimelineObjLawoSource | TimelineObjLawoSourceDeprecated | TimelineObjLawoEmberProperty | TimelineObjLawoEmberRetrigger
+export type TimelineObjLawoAny =
+	| TimelineObjLawoSources
+	| TimelineObjLawoSource
+	| TimelineObjLawoSourceDeprecated
+	| TimelineObjLawoEmberProperty
+	| TimelineObjLawoEmberRetrigger
 
 export interface ContentTimelineObjLawoSource {
 	faderValue: number
@@ -86,9 +91,11 @@ export interface TimelineObjLawoSources extends TimelineObjLawoBase {
 		deviceType: DeviceType.LAWO
 		type: TimelineContentTypeLawo.SOURCES
 
-		sources: Array<{
-			mappingName: string
-		} & ContentTimelineObjLawoSource>
+		sources: Array<
+			{
+				mappingName: string
+			} & ContentTimelineObjLawoSource
+		>
 		overridePriority?: number // defaults to 0
 	}
 }

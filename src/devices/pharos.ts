@@ -1,11 +1,5 @@
-import * as _ from 'underscore'
-import {
-	DeviceWithState,
-	CommandWithContext,
-	DeviceStatus,
-	StatusCode,
-	IDevice
-} from './device'
+import _ from 'underscore'
+import { DeviceWithState, CommandWithContext, DeviceStatus, StatusCode, IDevice } from './device'
 import {
 	DeviceType,
 	PharosOptions,
@@ -14,7 +8,7 @@ import {
 	TimelineObjPharosScene,
 	TimelineObjPharosTimeline,
 	DeviceOptionsPharos,
-	Mappings
+	Mappings,
 } from '../types/src'
 
 import { TimelineState, ResolvedTimelineObjectInstance } from 'superfly-timeline'
@@ -22,12 +16,14 @@ import { DoOnTime, SendMode } from '../doOnTime'
 import { Pharos, ProjectInfo } from './pharosAPI'
 
 export interface DeviceOptionsPharosInternal extends DeviceOptionsPharos {
-	options: (
-		DeviceOptionsPharos['options'] &
-		{ commandReceiver?: CommandReceiver }
-	)
+	options: DeviceOptionsPharos['options'] & { commandReceiver?: CommandReceiver }
 }
-export type CommandReceiver = (time: number, cmd: Command, context: CommandContext, timelineObjId: string) => Promise<any>
+export type CommandReceiver = (
+	time: number,
+	cmd: Command,
+	context: CommandContext,
+	timelineObjId: string
+) => Promise<any>
 export interface Command {
 	content: CommandContent
 	context: CommandContext
@@ -40,7 +36,7 @@ export interface PharosState extends TimelineState {
 }
 
 interface CommandContent {
-	fcn: (...args: any[]) => Promise<any>,
+	fcn: (...args: any[]) => Promise<any>
 	args: any[]
 }
 type CommandContext = string
@@ -56,20 +52,23 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 
 	private _commandReceiver: CommandReceiver
 
-	constructor (deviceId: string, deviceOptions: DeviceOptionsPharosInternal, options) {
-		super(deviceId, deviceOptions, options)
-		if (deviceOptions.options) {
-			if (deviceOptions.options.commandReceiver) this._commandReceiver = deviceOptions.options.commandReceiver
-			else this._commandReceiver = this._defaultCommandReceiver
-		}
-		this._doOnTime = new DoOnTime(() => {
-			return this.getCurrentTime()
-		}, SendMode.BURST, this._deviceOptions)
+	constructor(deviceId: string, deviceOptions: DeviceOptionsPharosInternal, getCurrentTime: () => Promise<number>) {
+		super(deviceId, deviceOptions, getCurrentTime)
+		if (deviceOptions.options?.commandReceiver) this._commandReceiver = deviceOptions.options.commandReceiver
+		else this._commandReceiver = this._defaultCommandReceiver
+
+		this._doOnTime = new DoOnTime(
+			() => {
+				return this.getCurrentTime()
+			},
+			SendMode.BURST,
+			this._deviceOptions
+		)
 		this.handleDoOnTime(this._doOnTime, 'Pharos')
 
 		this._pharos = new Pharos()
 
-		this._pharos.on('error', e => this.emit('error', 'Pharos', e))
+		this._pharos.on('error', (e) => this.emit('error', 'Pharos', e))
 		this._pharos.on('connected', () => {
 			this._connectionChanged()
 		})
@@ -81,22 +80,23 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 	/**
 	 * Initiates the connection with Pharos through the PharosAPI.
 	 */
-	init (initOptions: PharosOptions): Promise<boolean> {
+	init(initOptions: PharosOptions): Promise<boolean> {
 		return new Promise((resolve, reject) => {
 			// This is where we would do initialization, like connecting to the devices, etc
-			this._pharos.connect(initOptions)
-			.then(() => {
-				return this._pharos.getProjectInfo()
-			})
-			.then((systemInfo) => {
-				this._pharosProjectInfo = systemInfo
-			})
-			.then(() => resolve(true))
-			.catch(e => reject(e))
+			this._pharos
+				.connect(initOptions)
+				.then(() => {
+					return this._pharos.getProjectInfo()
+				})
+				.then((systemInfo) => {
+					this._pharosProjectInfo = systemInfo
+				})
+				.then(() => resolve(true))
+				.catch((e) => reject(e))
 		})
 	}
 	/** Called by the Conductor a bit before a .handleState is called */
-	prepareForHandleState (newStateTime: number) {
+	prepareForHandleState(newStateTime: number) {
 		// clear any queued commands later than this time:
 		this._doOnTime.clearQueueNowAndAfter(newStateTime)
 		this.cleanUpStates(0, newStateTime)
@@ -106,16 +106,18 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 	 * in time.
 	 * @param newState
 	 */
-	handleState (newState: TimelineState, newMappings: Mappings) {
+	handleState(newState: TimelineState, newMappings: Mappings) {
 		super.onHandleState(newState, newMappings)
 		// Handle this new state, at the point in time specified
 
-		let previousStateTime = Math.max(this.getCurrentTime(), newState.time)
-		let oldPharosState: PharosState = (this.getStateBefore(previousStateTime) || { state: { Layers: {}, time: 0, layers: {}, nextEvents: [] } }).state
+		const previousStateTime = Math.max(this.getCurrentTime(), newState.time)
+		const oldPharosState: PharosState = (
+			this.getStateBefore(previousStateTime) || { state: { Layers: {}, time: 0, layers: {}, nextEvents: [] } }
+		).state
 
-		let newPharosState = this.convertStateToPharos(newState)
+		const newPharosState = this.convertStateToPharos(newState)
 
-		let commandsToAchieveState: Array<Command> = this._diffStates(oldPharosState, newPharosState)
+		const commandsToAchieveState: Array<Command> = this._diffStates(oldPharosState, newPharosState)
 
 		// clear any queued commands later than this time:
 		this._doOnTime.clearQueueNowAndAfter(previousStateTime)
@@ -125,43 +127,42 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 		// store the new state, for later use:
 		this.setState(newPharosState, newState.time)
 	}
-	clearFuture (clearAfterTime: number) {
+	clearFuture(clearAfterTime: number) {
 		// Clear any scheduled commands after this time
 		this._doOnTime.clearQueueAfter(clearAfterTime)
 	}
-	terminate () {
+	terminate() {
 		this._doOnTime.dispose()
-		return this._pharos.dispose()
-		.then(() => {
+		return this._pharos.dispose().then(() => {
 			return true
 		})
 	}
-	get canConnect (): boolean {
+	get canConnect(): boolean {
 		return true
 	}
-	get connected (): boolean {
+	get connected(): boolean {
 		return this._pharos.connected
 	}
-	convertStateToPharos (state: TimelineState): PharosState {
+	convertStateToPharos(state: TimelineState): PharosState {
 		return state as PharosState
 	}
-	get deviceType () {
+	get deviceType() {
 		return DeviceType.PHAROS
 	}
-	get deviceName (): string {
+	get deviceName(): string {
 		return 'Pharos ' + this.deviceId + (this._pharosProjectInfo ? ', ' + this._pharosProjectInfo.name : '')
 	}
-	get queue () {
+	get queue() {
 		return this._doOnTime.getQueue()
 	}
-	async makeReady (okToDestroyStuff?: boolean): Promise<void> {
+	async makeReady(okToDestroyStuff?: boolean): Promise<void> {
 		if (okToDestroyStuff) {
 			this._doOnTime.clearQueueNowAndAfter(this.getCurrentTime())
 		}
 	}
-	getStatus (): DeviceStatus {
+	getStatus(): DeviceStatus {
 		let statusCode = StatusCode.GOOD
-		let messages: Array<string> = []
+		const messages: Array<string> = []
 
 		if (!this._pharos.connected) {
 			statusCode = StatusCode.BAD
@@ -171,30 +172,33 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 		return {
 			statusCode: statusCode,
 			messages: messages,
-			active: this.isActive
+			active: this.isActive,
 		}
 	}
 	/**
 	 * Add commands to queue, to be executed at the right time
 	 */
-	private _addToQueue (commandsToAchieveState: Array<Command>, time: number) {
+	private _addToQueue(commandsToAchieveState: Array<Command>, time: number) {
 		_.each(commandsToAchieveState, (cmd: Command) => {
-
 			// add the new commands to the queue:
-			this._doOnTime.queue(time, undefined, (cmd: Command) => {
-				return this._commandReceiver(time, cmd, cmd.context, cmd.timelineObjId)
-			}, cmd)
+			this._doOnTime.queue(
+				time,
+				undefined,
+				(cmd: Command) => {
+					return this._commandReceiver(time, cmd, cmd.context, cmd.timelineObjId)
+				},
+				cmd
+			)
 		})
 	}
 	/**
 	 * Compares the new timeline-state with the old one, and generates commands to account for the difference
 	 */
-	private _diffStates (oldPharosState: PharosState, newPharosState: PharosState) {
-		let commands: Array<Command> = []
-		let stoppedLayers: {[layerKey: string]: true} = {}
+	private _diffStates(oldPharosState: PharosState, newPharosState: PharosState) {
+		const commands: Array<Command> = []
+		const stoppedLayers: { [layerKey: string]: true } = {}
 
-		let stopLayer = (oldLayer: TimelineObjPharos, reason?: string) => {
-
+		const stopLayer = (oldLayer: TimelineObjPharos, reason?: string) => {
 			if (stoppedLayers[oldLayer.id]) return // don't send several remove commands for the same object
 
 			if (oldLayer.content.noRelease) return // override: don't stop / release
@@ -202,35 +206,32 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 			stoppedLayers[oldLayer.id] = true
 
 			if (oldLayer.content.type === TimelineContentTypePharos.SCENE) {
-
 				const oldScene = oldLayer as TimelineObjPharosScene
 
 				if (!reason) reason = 'removed scene'
 				commands.push({
 					content: {
 						args: [oldScene.content.scene, oldScene.content.fade],
-						fcn: (scene, fade) => this._pharos.releaseScene(scene, fade)
+						fcn: (scene, fade) => this._pharos.releaseScene(scene, fade),
 					},
 					context: `${reason}: ${oldLayer.id} ${oldScene.content.scene}`,
-					timelineObjId: oldLayer.id
+					timelineObjId: oldLayer.id,
 				})
 			} else if (oldLayer.content.type === TimelineContentTypePharos.TIMELINE) {
-
 				const oldTimeline = oldLayer as TimelineObjPharosTimeline
 
 				if (!reason) reason = 'removed timeline'
 				commands.push({
 					content: {
 						args: [oldTimeline.content.timeline, oldTimeline.content.fade],
-						fcn: (timeline, fade) => this._pharos.releaseTimeline(timeline, fade)
+						fcn: (timeline, fade) => this._pharos.releaseTimeline(timeline, fade),
 					},
 					context: `${reason}: ${oldLayer.id} ${oldTimeline.content.timeline}`,
-					timelineObjId: oldLayer.id
+					timelineObjId: oldLayer.id,
 				})
 			}
 		}
-		let modifyTimelinePlay = (newLayer: TimelineObjPharos, oldLayer?: TimelineObjPharos) => {
-
+		const modifyTimelinePlay = (newLayer: TimelineObjPharos, oldLayer?: TimelineObjPharos) => {
 			if (newLayer.content.type === TimelineContentTypePharos.TIMELINE) {
 				const newPharosTimeline = newLayer as TimelineObjPharosTimeline
 				const oldPharosTimeline = oldLayer as TimelineObjPharosTimeline
@@ -240,19 +241,19 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 						commands.push({
 							content: {
 								args: [newPharosTimeline.content.timeline],
-								fcn: (timeline) => this._pharos.pauseTimeline(timeline)
+								fcn: (timeline) => this._pharos.pauseTimeline(timeline),
 							},
 							context: `pause timeline: ${newLayer.id} ${newPharosTimeline.content.timeline}`,
-							timelineObjId: newLayer.id
+							timelineObjId: newLayer.id,
 						})
 					} else {
 						commands.push({
 							content: {
 								args: [newPharosTimeline.content.timeline],
-								fcn: (timeline) => this._pharos.resumeTimeline(timeline)
+								fcn: (timeline) => this._pharos.resumeTimeline(timeline),
 							},
 							context: `resume timeline: ${newLayer.id} ${newPharosTimeline.content.timeline}`,
-							timelineObjId: newLayer.id
+							timelineObjId: newLayer.id,
 						})
 					}
 				}
@@ -260,17 +261,16 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					commands.push({
 						content: {
 							args: [newPharosTimeline.content.timeline, newPharosTimeline.content.rate],
-							fcn: (timeline, rate) => this._pharos.setTimelineRate(timeline, rate)
+							fcn: (timeline, rate) => this._pharos.setTimelineRate(timeline, rate),
 						},
 						context: `pause timeline: ${newLayer.id} ${newPharosTimeline.content.timeline}: ${newPharosTimeline.content.rate}`,
-						timelineObjId: newLayer.id
+						timelineObjId: newLayer.id,
 					})
 				}
 				// @todo: support pause / setTimelinePosition
 			}
 		}
-		let startLayer = (newLayer: TimelineObjPharos, reason?: string) => {
-
+		const startLayer = (newLayer: TimelineObjPharos, reason?: string) => {
 			if (!newLayer.content.stopped) {
 				if (newLayer.content.type === TimelineContentTypePharos.SCENE) {
 					const newPharosScene = newLayer as TimelineObjPharosScene
@@ -279,10 +279,10 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					commands.push({
 						content: {
 							args: [newPharosScene.content.scene],
-							fcn: (scene) => this._pharos.startScene(scene)
+							fcn: (scene) => this._pharos.startScene(scene),
 						},
 						context: `${reason}: ${newLayer.id} ${newPharosScene.content.scene}`,
-						timelineObjId: newLayer.id
+						timelineObjId: newLayer.id,
 					})
 				} else if (newLayer.content.type === TimelineContentTypePharos.TIMELINE) {
 					const newPharosTimeline = newLayer as TimelineObjPharosTimeline
@@ -290,10 +290,10 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					commands.push({
 						content: {
 							args: [newPharosTimeline.content.timeline],
-							fcn: (timeline) => this._pharos.startTimeline(timeline)
+							fcn: (timeline) => this._pharos.startTimeline(timeline),
 						},
 						context: `${reason}: ${newLayer.id} ${newPharosTimeline.content.timeline}`,
-						timelineObjId: newLayer.id
+						timelineObjId: newLayer.id,
 					})
 					modifyTimelinePlay(newLayer)
 				}
@@ -305,9 +305,9 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 
 		// Added / Changed things:
 		_.each(newPharosState.layers, (newLayer: ResolvedTimelineObjectInstance, layerKey) => {
-			let oldPharosObj = oldPharosState.layers[layerKey] as any as TimelineObjPharos | undefined
+			const oldPharosObj = (oldPharosState.layers[layerKey] as any) as TimelineObjPharos | undefined
 
-			const pharosObj = newLayer as any as TimelineObjPharos
+			const pharosObj = (newLayer as any) as TimelineObjPharos
 
 			if (!oldPharosObj) {
 				// item is new
@@ -327,9 +327,7 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					if (pharosObj.content.type === TimelineContentTypePharos.SCENE) {
 						const pharosObjScene = pharosObj as TimelineObjPharosScene
 						const oldPharosObjScene = oldPharosObj as TimelineObjPharosScene
-						if (
-							pharosObjScene.content.scene !== oldPharosObjScene.content.scene
-						) {
+						if (pharosObjScene.content.scene !== oldPharosObjScene.content.scene) {
 							// scene has changed
 							stopLayer(oldPharosObj, 'scene changed from')
 							startLayer(pharosObj, 'scene changed to')
@@ -337,9 +335,7 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					} else if (pharosObj.content.type === TimelineContentTypePharos.TIMELINE) {
 						const pharosObjTimeline = pharosObj as TimelineObjPharosTimeline
 						const oldPharosObjTimeline = oldPharosObj as TimelineObjPharosTimeline
-						if (
-							pharosObjTimeline.content.timeline !== oldPharosObjTimeline.content.timeline
-						) {
+						if (pharosObjTimeline.content.timeline !== oldPharosObjTimeline.content.timeline) {
 							// timeline has changed
 							stopLayer(oldPharosObj, 'timeline changed from')
 							startLayer(pharosObj, 'timeline changed to')
@@ -349,13 +345,12 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 					}
 				}
 			}
-
 		})
 		// Removed things
 		_.each(oldPharosState.layers, (oldLayer: ResolvedTimelineObjectInstance, layerKey) => {
-			const oldPharosObj = oldLayer as any as TimelineObjPharos
+			const oldPharosObj = (oldLayer as any) as TimelineObjPharos
 
-			let newLayer = newPharosState.layers[layerKey]
+			const newLayer = newPharosState.layers[layerKey]
 			if (!newLayer) {
 				// removed item
 				stopLayer(oldPharosObj)
@@ -364,17 +359,21 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 
 		return commands
 	}
-	private async _defaultCommandReceiver (_time: number, cmd: Command, context: CommandContext, timelineObjId: string): Promise<any> {
-
+	private async _defaultCommandReceiver(
+		_time: number,
+		cmd: Command,
+		context: CommandContext,
+		timelineObjId: string
+	): Promise<any> {
 		// emit the command to debug:
-		let cwc: CommandWithContext = {
+		const cwc: CommandWithContext = {
 			context: context,
 			command: {
 				// commandName: cmd.content.args,
-				args: cmd.content.args
+				args: cmd.content.args,
 				// content: cmd.content
 			},
-			timelineObjId: timelineObjId
+			timelineObjId: timelineObjId,
 		}
 		this.emit('debug', cwc)
 
@@ -385,7 +384,7 @@ export class PharosDevice extends DeviceWithState<PharosState> implements IDevic
 			this.emit('commandError', e, cwc)
 		}
 	}
-	private _connectionChanged () {
+	private _connectionChanged() {
 		this.emit('connectionChanged', this.getStatus())
 	}
 }

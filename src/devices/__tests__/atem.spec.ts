@@ -5,12 +5,12 @@ import { AtemDevice, DeviceOptionsAtemInternal } from '../atem'
 import { MockTime } from '../../__tests__/mockTime'
 import {
 	Mappings,
-	DeviceType ,
+	DeviceType,
 	MappingAtem,
 	MappingAtemType,
 	TimelineContentTypeAtem,
 	AtemOptions,
-	AtemTransitionStyle
+	AtemTransitionStyle,
 } from '../../types/src'
 import { ThreadedClass } from 'threadedclass'
 import { TimelineState } from '../../types/src/superfly-timeline'
@@ -18,11 +18,16 @@ import { literal } from '../device'
 import { getMockCall } from '../../__tests__/lib'
 
 describe('Atem', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 
-	function compareAtemCommands (received: AtemConnection.Commands.ISerializableCommand, expected: AtemConnection.Commands.ISerializableCommand) {
+	function compareAtemCommands(
+		received: AtemConnection.Commands.ISerializableCommand,
+		expected: AtemConnection.Commands.ISerializableCommand
+	) {
 		expect(received.constructor.name).toEqual(expected.constructor.name)
-		expect(received.serialize(AtemConnection.Enums.ProtocolVersion.V8_0)).toEqual(expected.serialize(AtemConnection.Enums.ProtocolVersion.V8_0))
+		expect(received.serialize(AtemConnection.Enums.ProtocolVersion.V8_0)).toEqual(
+			expected.serialize(AtemConnection.Enums.ProtocolVersion.V8_0)
+		)
 	}
 
 	beforeAll(() => {
@@ -39,20 +44,26 @@ describe('Atem', () => {
 		const mockState: TimelineState = {
 			time: mockTime.now + 50,
 			layers: {},
-			nextEvents: []
+			nextEvents: [],
 		}
 
-		let device = new AtemDevice('mock', literal<DeviceOptionsAtemInternal>({
-			type: DeviceType.ATEM,
-			options: {
-				commandReceiver: commandReceiver0,
-				host: '127.0.0.1'
-			}
-		}), mockTime.getCurrentTime)
+		const device = new AtemDevice(
+			'mock',
+			literal<DeviceOptionsAtemInternal>({
+				type: DeviceType.ATEM,
+				options: {
+					commandReceiver: commandReceiver0,
+					host: '127.0.0.1',
+				},
+			}),
+			mockTime.getCurrentTime
+		)
 
-		await device.init(literal<AtemOptions>({
-			host: '127.0.0.1'
-		}))
+		await device.init(
+			literal<AtemOptions>({
+				host: '127.0.0.1',
+			})
+		)
 
 		device.handleState(mockState, {})
 
@@ -63,76 +74,81 @@ describe('Atem', () => {
 	})
 
 	test('Atem: switch input', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myLayerMapping0: MappingAtem = {
+		const myLayerMapping0: MappingAtem = {
 			device: DeviceType.ATEM,
 			deviceId: 'myAtem',
 			mappingType: MappingAtemType.MixEffect,
-			index: 0
+			index: 0,
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		await myConductor.init()
-		await myConductor.addDevice('myAtem', literal<DeviceOptionsAtemInternal>({
-			type: DeviceType.ATEM,
-			options: {
-				commandReceiver: commandReceiver0,
-				host: '127.0.0.1',
-				port: 9910
-			}
-		}))
+		await myConductor.addDevice(
+			'myAtem',
+			literal<DeviceOptionsAtemInternal>({
+				type: DeviceType.ATEM,
+				options: {
+					commandReceiver: commandReceiver0,
+					host: '127.0.0.1',
+					port: 9910,
+				},
+			})
+		)
 
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myAtem')
-		let device = deviceContainer.device as ThreadedClass<AtemDevice>
+		const deviceContainer = myConductor.getDevice('myAtem')
+		const device = deviceContainer.device as ThreadedClass<AtemDevice>
 
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
 
-		myConductor.setTimelineAndMappings([
-			{
-				id: 'obj0',
-				enable: {
-					start: mockTime.now - 1000, // 1 seconds ago
-					duration: 2000
+		myConductor.setTimelineAndMappings(
+			[
+				{
+					id: 'obj0',
+					enable: {
+						start: mockTime.now - 1000, // 1 seconds ago
+						duration: 2000,
+					},
+					layer: 'myLayer0',
+					content: {
+						deviceType: DeviceType.ATEM,
+						type: TimelineContentTypeAtem.ME,
+						me: {
+							input: 2,
+							transition: AtemTransitionStyle.CUT,
+						},
+					},
 				},
-				layer: 'myLayer0',
-				content: {
-					deviceType: DeviceType.ATEM,
-					type: TimelineContentTypeAtem.ME,
-					me: {
-						input: 2,
-						transition: AtemTransitionStyle.CUT
-					}
-				}
-			},
-			{
-				id: 'obj1',
-				enable: {
-					start: '#obj0.end',
-					duration: 2000
+				{
+					id: 'obj1',
+					enable: {
+						start: '#obj0.end',
+						duration: 2000,
+					},
+					layer: 'myLayer0',
+					content: {
+						deviceType: DeviceType.ATEM,
+						type: TimelineContentTypeAtem.ME,
+						me: {
+							input: 3,
+							transition: AtemTransitionStyle.CUT,
+						},
+					},
 				},
-				layer: 'myLayer0',
-				content: {
-					deviceType: DeviceType.ATEM,
-					type: TimelineContentTypeAtem.ME,
-					me: {
-						input: 3,
-						transition: AtemTransitionStyle.CUT
-					}
-				}
-			}
-		], myLayerMapping)
+			],
+			myLayerMapping
+		)
 
 		commandReceiver0.mockClear()
 		await mockTime.advanceTimeToTicks(10200)
@@ -149,68 +165,73 @@ describe('Atem', () => {
 	})
 
 	test('Atem: upstream keyer', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			// nothing
 		})
-		let myLayerMapping0: MappingAtem = {
+		const myLayerMapping0: MappingAtem = {
 			device: DeviceType.ATEM,
 			deviceId: 'myAtem',
 			mappingType: MappingAtemType.MixEffect,
-			index: 0
+			index: 0,
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		await myConductor.init()
-		await myConductor.addDevice('myAtem', literal<DeviceOptionsAtemInternal>({
-			type: DeviceType.ATEM,
-			options: {
-				commandReceiver: commandReceiver0,
-				host: '127.0.0.1',
-				port: 9910
-			}
-		}))
+		await myConductor.addDevice(
+			'myAtem',
+			literal<DeviceOptionsAtemInternal>({
+				type: DeviceType.ATEM,
+				options: {
+					commandReceiver: commandReceiver0,
+					host: '127.0.0.1',
+					port: 9910,
+				},
+			})
+		)
 
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myAtem')
-		let device = deviceContainer.device as ThreadedClass<AtemDevice>
+		const deviceContainer = myConductor.getDevice('myAtem')
+		const device = deviceContainer.device as ThreadedClass<AtemDevice>
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
-		myConductor.setTimelineAndMappings([
-			{
-				id: 'obj0',
-				enable: {
-					start: mockTime.now - 1000, // 1 seconds ago
-					duration: 2000
-				},
-				layer: 'myLayer0',
-				content: {
-					deviceType: DeviceType.ATEM,
-					type: TimelineContentTypeAtem.ME,
-					me: {
-						upstreamKeyers: [
-							{
-								upstreamKeyerId: 0,
+		myConductor.setTimelineAndMappings(
+			[
+				{
+					id: 'obj0',
+					enable: {
+						start: mockTime.now - 1000, // 1 seconds ago
+						duration: 2000,
+					},
+					layer: 'myLayer0',
+					content: {
+						deviceType: DeviceType.ATEM,
+						type: TimelineContentTypeAtem.ME,
+						me: {
+							upstreamKeyers: [
+								{
+									upstreamKeyerId: 0,
 
-								lumaSettings: {
-									preMultiplied: false,
-									clip: 300,
-									gain: 2,
-									invert: true
-								}
-							}
-						]
-					}
-				}
-			}
-		], myLayerMapping)
+									lumaSettings: {
+										preMultiplied: false,
+										clip: 300,
+										gain: 2,
+										invert: true,
+									},
+								},
+							],
+						},
+					},
+				},
+			],
+			myLayerMapping
+		)
 
 		await mockTime.advanceTimeToTicks(10200)
 
@@ -219,66 +240,71 @@ describe('Atem', () => {
 		cmd.updateProps({
 			clip: 300,
 			gain: 2,
-			invert: true
+			invert: true,
 		})
 		compareAtemCommands(getMockCall(commandReceiver0, 0, 1), cmd)
 	})
 
 	test('Atem: handle same state', async () => {
-
 		const commandReceiver0 = jest.fn(() => {
 			return Promise.resolve()
 		})
 		const myLayerMapping: Mappings = {
-			'myLayer0': literal<MappingAtem>({
+			myLayer0: literal<MappingAtem>({
 				device: DeviceType.ATEM,
 				deviceId: 'mock',
 				mappingType: MappingAtemType.MixEffect,
-				index: 0
-			})
+				index: 0,
+			}),
 		}
 
 		const resolvedObj: ResolvedTimelineObjectInstance = {
 			id: 'obj0',
 			enable: {
 				start: mockTime.now - 1000, // 1 seconds ago
-				duration: 0
+				duration: 0,
 			},
 			layer: 'myLayer0',
 			content: {
 				type: TimelineContentTypeAtem.ME,
 				me: {
 					input: 4,
-					transition: Enums.TransitionStyle.CUT
-				}
+					transition: Enums.TransitionStyle.CUT,
+				},
 			},
 			resolved: {
 				resolved: true,
 				resolving: false,
 				instances: [{ start: mockTime.now - 1000, end: Infinity, id: 'a0', references: [] }],
-				directReferences: []
+				directReferences: [],
 			},
-			instance: { start: mockTime.now - 1000, end: Infinity, id: 'a0', references: [] }
+			instance: { start: mockTime.now - 1000, end: Infinity, id: 'a0', references: [] },
 		}
 		const mockState: TimelineState = {
 			time: mockTime.now + 50,
 			layers: {
-				'myLayer0': resolvedObj
+				myLayer0: resolvedObj,
 			},
-			nextEvents: []
+			nextEvents: [],
 		}
 
-		let device = new AtemDevice('mock', {
-			type: DeviceType.ATEM,
-			options: {
-				commandReceiver: commandReceiver0,
-				host: '127.0.0.1'
-			}
-		}, mockTime.getCurrentTime)
+		const device = new AtemDevice(
+			'mock',
+			{
+				type: DeviceType.ATEM,
+				options: {
+					commandReceiver: commandReceiver0,
+					host: '127.0.0.1',
+				},
+			},
+			mockTime.getCurrentTime
+		)
 
-		await device.init(literal<AtemOptions>({
-			host: '127.0.0.1'
-		}))
+		await device.init(
+			literal<AtemOptions>({
+				host: '127.0.0.1',
+			})
+		)
 
 		// Check that no commands has been scheduled
 		expect(device.queue).toHaveLength(0)

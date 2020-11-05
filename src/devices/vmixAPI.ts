@@ -3,29 +3,32 @@ import * as request from 'request'
 import * as xml from 'xml-js'
 import { VMixOptions, VMixCommand, VMixTransitionType, VMixInputType } from '../types/src'
 import { VMixState, VMixInput, VMixMix } from './vmix'
-import * as _ from 'underscore'
+import _ from 'underscore'
 
 const PING_INTERVAL = 10 * 1000
 
 export class VMix extends EventEmitter {
-	public state: VMixState
+	public state: VMixState | undefined = undefined
 	public pingInterval = PING_INTERVAL
 
-	private _options: VMixOptions
-	private _connected: boolean = false
-	private _disposed: boolean = false
+	private _options: VMixOptions = {
+		host: '',
+		port: 0,
+	}
+	private _connected = false
+	private _disposed = false
 
 	private _socketKeepAliveTimeout: NodeJS.Timer | null = null
 
-	connect (options: VMixOptions): Promise<boolean> {
+	connect(options: VMixOptions): Promise<boolean> {
 		return this._connectHTTP(options)
 	}
 
-	public get connected (): boolean {
+	public get connected(): boolean {
 		return this._connected
 	}
 
-	public dispose (): Promise<void> {
+	public dispose(): Promise<void> {
 		return new Promise((resolve) => {
 			this._connected = false
 			this._disposed = true
@@ -37,7 +40,7 @@ export class VMix extends EventEmitter {
 		})
 	}
 
-	private _connectHTTP (options?: VMixOptions): Promise<boolean> {
+	private _connectHTTP(options?: VMixOptions): Promise<boolean> {
 		if (options) {
 			if (!(options.host.startsWith('http://') || options.host.startsWith('https://'))) {
 				options.host = `http://${options.host}`
@@ -55,7 +58,7 @@ export class VMix extends EventEmitter {
 		})
 	}
 
-	private setConnected (connected: boolean) {
+	private setConnected(connected: boolean) {
 		if (connected !== this._connected) {
 			this._connected = connected
 			if (connected) {
@@ -66,7 +69,7 @@ export class VMix extends EventEmitter {
 		}
 	}
 
-	private _stillAlive () {
+	private _stillAlive() {
 		if (this._socketKeepAliveTimeout) {
 			clearTimeout(this._socketKeepAliveTimeout)
 			this._socketKeepAliveTimeout = null
@@ -78,7 +81,7 @@ export class VMix extends EventEmitter {
 		}
 	}
 
-	public async sendCommand (command: VMixStateCommand): Promise<any> {
+	public async sendCommand(command: VMixStateCommand): Promise<any> {
 		switch (command.command) {
 			case VMixCommand.PREVIEW_INPUT:
 				return this.setPreviewInput(command.input, command.mix)
@@ -153,7 +156,7 @@ export class VMix extends EventEmitter {
 		}
 	}
 
-	public getVMixState () {
+	public getVMixState(): void {
 		request.get(`${this._options.host}:${this._options.port}/api`, {}, (error, res) => {
 			if (error) {
 				this.setConnected(false)
@@ -166,44 +169,48 @@ export class VMix extends EventEmitter {
 		})
 	}
 
-	public parseVMixState (responseBody: any) {
+	public parseVMixState(responseBody: string): void {
 		const preParsed = xml.xml2json(responseBody, { compact: true, spaces: 4 })
 		const xmlState = JSON.parse(preParsed)
 		let mixes = xmlState['vmix']['mix']
-		mixes = Array.isArray(mixes) ? mixes : (mixes ? [mixes] : [])
+		mixes = Array.isArray(mixes) ? mixes : mixes ? [mixes] : []
 		let fixedInputsCount = 0
 		// For what lies ahead I apologise - Tom
-		let state: VMixState = {
+		const state: VMixState = {
 			version: xmlState['vmix']['version']['_text'],
 			edition: xmlState['vmix']['edition']['_text'],
-			inputs: _.indexBy((xmlState['vmix']['inputs']['input'] as Array<any>)
-			.map((input): VMixInput => {
-				if (!(input['_attributes']['type'] in VMixInputType)) {
-					fixedInputsCount++
-				}
-				return {
-					number: Number(input['_attributes']['number']),
-					type: input['_attributes']['type'],
-					state: input['_attributes']['state'],
-					position: Number(input['_attributes']['position']) || 0,
-					duration: Number(input['_attributes']['duration']) || 0,
-					loop: (input['_attributes']['loop'] === 'False') ? false : true,
-					muted: (input['_attributes']['muted'] === 'False') ? false : true,
-					volume: Number(input['_attributes']['volume'] || 100),
-					balance: Number(input['_attributes']['balance'] || 0),
-					audioBuses: input['_attributes']['audiobusses'],
-					transform: {
-						panX: Number(input['position'] ? input['position']['_attributes']['panX'] || 0 : 0),
-						panY: Number(input['position'] ? input['position']['_attributes']['panY'] || 0 : 0),
-						alpha: -1, // unavailable
-						zoom: Number(input['position'] ? input['position']['_attributes']['zoomX'] || 1 : 1) // assume that zoomX==zoomY
+			inputs: _.indexBy(
+				(xmlState['vmix']['inputs']['input'] as Array<any>).map(
+					(input): VMixInput => {
+						if (!(input['_attributes']['type'] in VMixInputType)) {
+							fixedInputsCount++
+						}
+						return {
+							number: Number(input['_attributes']['number']),
+							type: input['_attributes']['type'],
+							state: input['_attributes']['state'],
+							position: Number(input['_attributes']['position']) || 0,
+							duration: Number(input['_attributes']['duration']) || 0,
+							loop: input['_attributes']['loop'] === 'False' ? false : true,
+							muted: input['_attributes']['muted'] === 'False' ? false : true,
+							volume: Number(input['_attributes']['volume'] || 100),
+							balance: Number(input['_attributes']['balance'] || 0),
+							audioBuses: input['_attributes']['audiobusses'],
+							transform: {
+								panX: Number(input['position'] ? input['position']['_attributes']['panX'] || 0 : 0),
+								panY: Number(input['position'] ? input['position']['_attributes']['panY'] || 0 : 0),
+								alpha: -1, // unavailable
+								zoom: Number(input['position'] ? input['position']['_attributes']['zoomX'] || 1 : 1), // assume that zoomX==zoomY
+							},
+						}
 					}
-				}
-			}), 'number'),
-			overlays: (xmlState['vmix']['overlays']['overlay'] as Array<any>).map(overlay => {
+				),
+				'number'
+			),
+			overlays: (xmlState['vmix']['overlays']['overlay'] as Array<any>).map((overlay) => {
 				return {
 					number: Number(overlay['_attributes']['number']),
-					input: overlay['_text']
+					input: overlay['_text'],
 				}
 			}),
 			mixes: [
@@ -211,50 +218,53 @@ export class VMix extends EventEmitter {
 					number: 1,
 					program: Number(xmlState['vmix']['active']['_text']),
 					preview: Number(xmlState['vmix']['preview']['_text']),
-					transition: { effect: VMixTransitionType.Cut, duration: 0 }
+					transition: { effect: VMixTransitionType.Cut, duration: 0 },
 				},
-				...mixes.map((mix): VMixMix => {
-					return {
-						number: Number(mix['_attributes']['number']),
-						program: Number(mix['active']['_text']),
-						preview: Number(mix['preview']['_text']),
-						transition: { effect: VMixTransitionType.Cut, duration: 0 }}
-				})
+				...mixes.map(
+					(mix: Record<string, any>): VMixMix => {
+						return {
+							number: Number(mix['_attributes']['number']),
+							program: Number(mix['active']['_text']),
+							preview: Number(mix['preview']['_text']),
+							transition: { effect: VMixTransitionType.Cut, duration: 0 },
+						}
+					}
+				),
 			],
-			fadeToBlack: (xmlState['vmix']['fadeToBlack']['_text'] === 'True') ? true : false,
-			recording: (xmlState['vmix']['recording']['_text'] === 'True') ? true : false,
-			external: (xmlState['vmix']['external']['_text'] === 'True') ? true : false,
-			streaming: (xmlState['vmix']['streaming']['_text'] === 'True') ? true : false,
-			playlist: (xmlState['vmix']['playList']['_text'] === 'True') ? true : false,
-			multiCorder: (xmlState['vmix']['multiCorder']['_text'] === 'True') ? true : false,
-			fullscreen: (xmlState['vmix']['fullscreen']['_text'] === 'True') ? true : false,
+			fadeToBlack: xmlState['vmix']['fadeToBlack']['_text'] === 'True' ? true : false,
+			recording: xmlState['vmix']['recording']['_text'] === 'True' ? true : false,
+			external: xmlState['vmix']['external']['_text'] === 'True' ? true : false,
+			streaming: xmlState['vmix']['streaming']['_text'] === 'True' ? true : false,
+			playlist: xmlState['vmix']['playList']['_text'] === 'True' ? true : false,
+			multiCorder: xmlState['vmix']['multiCorder']['_text'] === 'True' ? true : false,
+			fullscreen: xmlState['vmix']['fullscreen']['_text'] === 'True' ? true : false,
 			audio: [
 				{
 					volume: Number(xmlState['vmix']['audio']['master']['_attributes']['volume']),
-					muted: (xmlState['vmix']['audio']['master']['_attributes']['muted'] === 'True') ? true : false,
+					muted: xmlState['vmix']['audio']['master']['_attributes']['muted'] === 'True' ? true : false,
 					meterF1: Number(xmlState['vmix']['audio']['master']['_attributes']['meterF1']),
 					meterF2: Number(xmlState['vmix']['audio']['master']['_attributes']['meterF2']),
-					headphonesVolume: Number(xmlState['vmix']['audio']['master']['_attributes']['headphonesVolume'])
-				}
+					headphonesVolume: Number(xmlState['vmix']['audio']['master']['_attributes']['headphonesVolume']),
+				},
 			],
-			fixedInputsCount
+			fixedInputsCount,
 		}
 		this.setState(state)
 	}
 
-	public setState (state: VMixState): void {
+	public setState(state: VMixState): void {
 		this.state = state
 	}
 
-	public setPreviewInput (input: number | string, mix: number): Promise<any> {
+	public setPreviewInput(input: number | string, mix: number): Promise<any> {
 		return this.sendCommandFunction('PreviewInput', { input, mix })
 	}
 
-	public transition (input: number | string, effect: string, duration: number, mix: number): Promise<any> {
+	public transition(input: number | string, effect: string, duration: number, mix: number): Promise<any> {
 		return this.sendCommandFunction(effect, { input, duration, mix })
 	}
 
-	public setAudioLevel (input: number | string, volume: number, fade?: number): Promise<any> {
+	public setAudioLevel(input: number | string, volume: number, fade?: number): Promise<any> {
 		let value: string = Math.min(Math.max(volume, 0), 100).toString()
 		if (fade) {
 			value += ',' + fade.toString()
@@ -262,132 +272,135 @@ export class VMix extends EventEmitter {
 		return this.sendCommandFunction(`SetVolume${fade ? 'Fade' : ''}`, { input: input, value })
 	}
 
-	public setAudioBalance (input: number | string, balance: number): Promise<any> {
+	public setAudioBalance(input: number | string, balance: number): Promise<any> {
 		return this.sendCommandFunction(`SetBalance`, { input, value: Math.min(Math.max(balance, -1), 1) })
 	}
 
-	public setAudioOn (input: number | string): Promise<any> {
+	public setAudioOn(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`AudioOn`, { input })
 	}
 
-	public setAudioOff (input: number | string): Promise<any> {
+	public setAudioOff(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`AudioOff`, { input })
 	}
 
-	public setAudioAutoOn (input: number | string): Promise<any> {
+	public setAudioAutoOn(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`AudioAutoOn`, { input })
 	}
 
-	public setAudioAutoOff (input: number | string): Promise<any> {
+	public setAudioAutoOff(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`AudioAutoOff`, { input })
 	}
 
-	public setAudioBusOn (input: number | string, value: string): Promise<any> {
+	public setAudioBusOn(input: number | string, value: string): Promise<any> {
 		return this.sendCommandFunction(`AudioBusOn`, { input, value })
 	}
 
-	public setAudioBusOff (input: number | string, value: string): Promise<any> {
+	public setAudioBusOff(input: number | string, value: string): Promise<any> {
 		return this.sendCommandFunction(`AudioBusOff`, { input, value })
 	}
 
-	public setFader (position: number): Promise<any> {
+	public setFader(position: number): Promise<any> {
 		return this.sendCommandFunction(`SetFader`, { value: Math.min(Math.max(position, 0), 255) })
 	}
 
-	public setPanX (input: number | string, value: number): Promise<any> {
+	public setPanX(input: number | string, value: number): Promise<any> {
 		return this.sendCommandFunction(`SetPanX`, { input, value: Math.min(Math.max(value, -2), 2) })
 	}
 
-	public setPanY (input: number | string, value: number): Promise<any> {
+	public setPanY(input: number | string, value: number): Promise<any> {
 		return this.sendCommandFunction(`SetPanY`, { input, value: Math.min(Math.max(value, -2), 2) })
 	}
 
-	public setZoom (input: number | string, value: number): Promise<any> {
+	public setZoom(input: number | string, value: number): Promise<any> {
 		return this.sendCommandFunction(`SetZoom`, { input, value: Math.min(Math.max(value, 0), 5) })
 	}
 
-	public setAlpha (input: number | string, value: number): Promise<any> {
+	public setAlpha(input: number | string, value: number): Promise<any> {
 		return this.sendCommandFunction(`SetAlpha`, { input, value: Math.min(Math.max(value, 0), 255) })
 	}
 
-	public startRecording (): Promise<any> {
+	public startRecording(): Promise<any> {
 		return this.sendCommandFunction(`StartRecording`, {})
 	}
 
-	public stopRecording (): Promise<any> {
+	public stopRecording(): Promise<any> {
 		return this.sendCommandFunction(`StopRecording`, {})
 	}
 
-	public startStreaming (): Promise<any> {
+	public startStreaming(): Promise<any> {
 		return this.sendCommandFunction(`StartStreaming`, {})
 	}
 
-	public stopStreaming (): Promise<any> {
+	public stopStreaming(): Promise<any> {
 		return this.sendCommandFunction(`StopStreaming`, {})
 	}
 
-	public fadeToBlack (): Promise<any> {
+	public fadeToBlack(): Promise<any> {
 		return this.sendCommandFunction(`FadeToBlack`, {})
 	}
 
-	public addInput (file: string): Promise<any> {
+	public addInput(file: string): Promise<any> {
 		return this.sendCommandFunction(`AddInput`, { value: file })
 	}
 
-	public removeInput (name: string): Promise<any> {
+	public removeInput(name: string): Promise<any> {
 		return this.sendCommandFunction(`RemoveInput`, { input: name })
 	}
 
-	public playInput (input: number | string): Promise<any> {
+	public playInput(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`Play`, { input: input })
 	}
 
-	public pauseInput (input: number | string): Promise<any> {
+	public pauseInput(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`Pause`, { input: input })
 	}
 
-	public setPosition (input: number | string, value: number): Promise<any> {
+	public setPosition(input: number | string, value: number): Promise<any> {
 		return this.sendCommandFunction(`SetPosition`, { input: input, value: value })
 	}
 
-	public loopOn (input: number | string): Promise<any> {
+	public loopOn(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`LoopOn`, { input: input })
 	}
 
-	public loopOff (input: number | string): Promise<any> {
+	public loopOff(input: number | string): Promise<any> {
 		return this.sendCommandFunction(`LoopOff`, { input: input })
 	}
 
-	public setInputName (input: number | string, value: string): Promise<any> {
+	public setInputName(input: number | string, value: string): Promise<any> {
 		return this.sendCommandFunction(`SetInputName`, { input: input, value: value })
 	}
 
-	public setOutput (name: string, value: string, input?: number | string): Promise<any> {
+	public setOutput(name: string, value: string, input?: number | string): Promise<any> {
 		return this.sendCommandFunction(`SetOutput${name}`, { value, input })
 	}
 
-	public startExternal (): Promise<any> {
+	public startExternal(): Promise<any> {
 		return this.sendCommandFunction(`StartExternal`, {})
 	}
 
-	public stopExternal (): Promise<any> {
+	public stopExternal(): Promise<any> {
 		return this.sendCommandFunction(`StopExternal`, {})
 	}
 
-	public overlayInputIn (name: number, input: string | number): Promise<any> {
+	public overlayInputIn(name: number, input: string | number): Promise<any> {
 		return this.sendCommandFunction(`OverlayInput${name}In`, { input: input })
 	}
 
-	public overlayInputOut (name: number): Promise<any> {
+	public overlayInputOut(name: number): Promise<any> {
 		return this.sendCommandFunction(`OverlayInput${name}Out`, {})
 	}
 
-	public setInputOverlay (input: string | number, index: number, value: string | number): Promise<any> {
-		let val = `${index},${value}`
+	public setInputOverlay(input: string | number, index: number, value: string | number): Promise<any> {
+		const val = `${index},${value}`
 		return this.sendCommandFunction(`SetMultiViewOverlay`, { input, value: val })
 	}
 
-	public sendCommandFunction (func: string, args: { input?: string | number, value?: string | number, extra?: string, duration?: number, mix?: number }): Promise<any> {
+	public sendCommandFunction(
+		func: string,
+		args: { input?: string | number; value?: string | number; extra?: string; duration?: number; mix?: number }
+	): Promise<any> {
 		const inp = args.input !== undefined ? `&Input=${args.input}` : ''
 		const val = args.value !== undefined ? `&Value=${args.value}` : ''
 		const dur = args.duration !== undefined ? `&Duration=${args.duration}` : ''
@@ -565,37 +578,38 @@ export interface VMixStateCommandSetInputOverlay extends VMixStateCommandBase {
 	index: number
 	value: string | number
 }
-export type VMixStateCommand = VMixStateCommandPreviewInput |
-	VMixStateCommandTransition |
-	VMixStateCommandAudio |
-	VMixStateCommandAudioBalance |
-	VMixStateCommandAudioOn |
-	VMixStateCommandAudioOff |
-	VMixStateCommandAudioAutoOn |
-	VMixStateCommandAudioAutoOff |
-	VMixStateCommandAudioBusOn |
-	VMixStateCommandAudioBusOff |
-	VMixStateCommandFader |
-	VMixStateCommandSetZoom |
-	VMixStateCommandSetPanX |
-	VMixStateCommandSetPanY |
-	VMixStateCommandSetAlpha |
-	VMixStateCommandStartStreaming |
-	VMixStateCommandStopStreaming |
-	VMixStateCommandStartRecording |
-	VMixStateCommandStopRecording |
-	VMixStateCommandFadeToBlack |
-	VMixStateCommandAddInput |
-	VMixStateCommandRemoveInput |
-	VMixStateCommandPlayInput |
-	VMixStateCommandPauseInput |
-	VMixStateCommandSetPosition |
-	VMixStateCommandLoopOn |
-	VMixStateCommandLoopOff |
-	VMixStateCommandSetInputName |
-	VMixStateCommandSetOuput |
-	VMixStateCommandStartExternal |
-	VMixStateCommandStopExternal |
-	VMixStateCommandOverlayInputIn |
-	VMixStateCommandOverlayInputOut |
-	VMixStateCommandSetInputOverlay
+export type VMixStateCommand =
+	| VMixStateCommandPreviewInput
+	| VMixStateCommandTransition
+	| VMixStateCommandAudio
+	| VMixStateCommandAudioBalance
+	| VMixStateCommandAudioOn
+	| VMixStateCommandAudioOff
+	| VMixStateCommandAudioAutoOn
+	| VMixStateCommandAudioAutoOff
+	| VMixStateCommandAudioBusOn
+	| VMixStateCommandAudioBusOff
+	| VMixStateCommandFader
+	| VMixStateCommandSetZoom
+	| VMixStateCommandSetPanX
+	| VMixStateCommandSetPanY
+	| VMixStateCommandSetAlpha
+	| VMixStateCommandStartStreaming
+	| VMixStateCommandStopStreaming
+	| VMixStateCommandStartRecording
+	| VMixStateCommandStopRecording
+	| VMixStateCommandFadeToBlack
+	| VMixStateCommandAddInput
+	| VMixStateCommandRemoveInput
+	| VMixStateCommandPlayInput
+	| VMixStateCommandPauseInput
+	| VMixStateCommandSetPosition
+	| VMixStateCommandLoopOn
+	| VMixStateCommandLoopOff
+	| VMixStateCommandSetInputName
+	| VMixStateCommandSetOuput
+	| VMixStateCommandStartExternal
+	| VMixStateCommandStopExternal
+	| VMixStateCommandOverlayInputIn
+	| VMixStateCommandOverlayInputOut
+	| VMixStateCommandSetInputOverlay

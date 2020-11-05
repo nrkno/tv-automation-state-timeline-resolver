@@ -1,4 +1,3 @@
-
 import * as atemState from './atem-state'
 import * as casparcgConnection from './casparcg-connection'
 import * as emberplusConnection from './emberplus-connection'
@@ -16,7 +15,7 @@ import * as ws from './ws'
 // (just adding the mock-file in an adjecent __mocks__ directory)
 // does not work properly and need to be set up like this..
 
-export function setupAllMocks () {
+export function setupAllMocks() {
 	jest.mock('atem-state', () => atemState)
 	jest.mock('casparcg-connection', () => casparcgConnection)
 	jest.mock('emberplus-connection', () => emberplusConnection)

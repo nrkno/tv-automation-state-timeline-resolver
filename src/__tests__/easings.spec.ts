@@ -1,68 +1,25 @@
 import { Easing } from '../easings'
 
 describe('easings', () => {
-
 	const easings = {
-		'Linear': [
-			'None'
-		],
-		'Quadratic': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Cubic': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Quartic': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Quintic': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Sinusoidal': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Exponential': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Circular': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Elastic': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Back': [
-			'In',
-			'Out',
-			'InOut'
-		],
-		'Bounce': [
-			'In',
-			'Out',
-			'InOut'
-		]
+		Linear: ['None'],
+		Quadratic: ['In', 'Out', 'InOut'],
+		Cubic: ['In', 'Out', 'InOut'],
+		Quartic: ['In', 'Out', 'InOut'],
+		Quintic: ['In', 'Out', 'InOut'],
+		Sinusoidal: ['In', 'Out', 'InOut'],
+		Exponential: ['In', 'Out', 'InOut'],
+		Circular: ['In', 'Out', 'InOut'],
+		Elastic: ['In', 'Out', 'InOut'],
+		Back: ['In', 'Out', 'InOut'],
+		Bounce: ['In', 'Out', 'InOut'],
 	}
 
 	Object.entries(easings).forEach((a) => {
 		const easingName = a[0]
 		const subTypes = a[1]
 
-		subTypes.forEach(subType => {
+		subTypes.forEach((subType) => {
 			test(`Easing ${easingName}: ${subType}`, () => {
 				const easingType = Easing[easingName]
 				expect(easingType).toBeTruthy()
@@ -79,7 +36,6 @@ describe('easings', () => {
 				})
 
 				expect(result).toMatchSnapshot()
-
 			})
 		})
 	})

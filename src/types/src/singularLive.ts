@@ -18,7 +18,7 @@ export interface SingularLiveOptions {
 }
 
 export enum TimelineContentTypeSingularLive {
-	COMPOSITION = 'composition'
+	COMPOSITION = 'composition',
 }
 
 export type TimelineObjSingularLiveAny = TimelineObjSingularLiveComposition

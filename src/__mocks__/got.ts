@@ -15,10 +15,10 @@ let _mockDel: (options: Options) => Promise<any>
 let _mockDelete: (options: Options) => Promise<any>
 
 interface Options {
-	url: string,
-	method: 'POST' | 'GET' | 'PUT' | 'DELETE',
-	json?: object,
-	timeout: number,
+	url: string
+	method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+	json?: Record<string, unknown>
+	timeout: number
 	responseType: string // 'json'
 }
 const gotMethods = {
@@ -68,7 +68,7 @@ const gotMethods = {
 	},
 	delete: (options: Options) => {
 		return _mockDelete(options)
-	}
+	},
 }
 const got: any = (options: Options) => {
 	if (options.method === 'POST') return gotMethods.post(options)
@@ -77,7 +77,7 @@ const got: any = (options: Options) => {
 	else if (options.method === 'DELETE') return gotMethods.delete(options)
 	else return 'ERROR: method not supported'
 }
-Object.keys(gotMethods).forEach(key => {
+Object.keys(gotMethods).forEach((key) => {
 	got[key] = gotMethods[key]
 })
 export = got

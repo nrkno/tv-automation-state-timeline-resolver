@@ -1,4 +1,4 @@
-import * as _ from 'underscore'
+import _ from 'underscore'
 import { getDiff } from '../lib'
 
 describe('equal', () => {
@@ -6,9 +6,8 @@ describe('equal', () => {
 	Note: These test cases are based upon the _.isEqual tests from underscore in
 	https://github.com/jashkenas/underscore/blob/master/test/objects.js
 	*/
-	function testEqual (a, b) {
-
-		let d = getDiff(a, b)
+	function testEqual(a, b) {
+		const d = getDiff(a, b)
 
 		if (_.isEqual(a, b)) {
 			// they are equal
@@ -18,14 +17,12 @@ describe('equal', () => {
 		}
 	}
 
-	function First () {
-		// @ts-ignore
-		this.value = 1
+	class First {
+		value = 1
 	}
 	First.prototype.value = 1
-	function Second () {
-		// @ts-ignore
-		this.value = 1
+	class Second {
+		value = 1
 	}
 	Second.prototype.value = 2
 
@@ -34,7 +31,7 @@ describe('equal', () => {
 		testEqual(null, null)
 	})
 	test('`undefined` is equal to `undefined`', () => {
-		// @ts-ignore
+		// @ts-expect-error: undefined parameters
 		testEqual()
 	})
 	test('`0` is not equal to `-0`', () => {
@@ -71,7 +68,11 @@ describe('equal', () => {
 		testEqual(new String('Curly'), new String('Larry'))
 	})
 	test('String objects and objects with a custom `toString` method are not equal', () => {
-		testEqual(new String('Curly'), { toString: function () { return 'Curly' } })
+		testEqual(new String('Curly'), {
+			toString: function () {
+				return 'Curly'
+			},
+		})
 	})
 
 	// Number object and primitive comparisons.
@@ -98,7 +99,11 @@ describe('equal', () => {
 		testEqual(new Number(75), new Number(63))
 	})
 	test('Number objects and objects with a `valueOf` method are not equal', () => {
-		testEqual(new Number(63), { valueOf: function () { return 63 } })
+		testEqual(new Number(63), {
+			valueOf: function () {
+				return 63
+			},
+		})
 	})
 	// Comparisons involving `NaN`.
 	test('`NaN` is equal to `NaN`', () => {
@@ -170,7 +175,11 @@ describe('equal', () => {
 		testEqual(new Date(2009, 9, 25), new Date(2009, 11, 13))
 	})
 	test('Date objects and objects with a `getTime` method are not equal', () => {
-		testEqual(new Date(2009, 11, 13), { getTime: () => { return 12606876e5 } })
+		testEqual(new Date(2009, 11, 13), {
+			getTime: () => {
+				return 12606876e5
+			},
+		})
 	})
 	test('Invalid dates are not equal', () => {
 		testEqual(new Date('Curly'), new Date('Curly'))
@@ -186,7 +195,7 @@ describe('equal', () => {
 		testEqual(/(?:)/gim, /(?:)/gim)
 	})
 	test('Flag order is not significant', () => {
-		testEqual(/(?:)/gi, /(?:)/ig)
+		testEqual(/(?:)/gi, /(?:)/gi)
 	})
 	test('RegExps with equivalent patterns and different flags are not equal', () => {
 		testEqual(/(?:)/g, /(?:)/gi)
@@ -231,8 +240,24 @@ describe('equal', () => {
 	})
 
 	test('Multi-dimensional arrays', () => {
-		let a: any = [new Number(47), false, 'Larry', /Moe/, new Date(2009, 11, 13), ['running', 'biking', new String('programming')], { a: 47 }]
-		let b: any = [new Number(47), false, 'Larry', /Moe/, new Date(2009, 11, 13), ['running', 'biking', new String('programming')], { a: 47 }]
+		const a: any = [
+			new Number(47),
+			false,
+			'Larry',
+			/Moe/,
+			new Date(2009, 11, 13),
+			['running', 'biking', new String('programming')],
+			{ a: 47 },
+		]
+		const b: any = [
+			new Number(47),
+			false,
+			'Larry',
+			/Moe/,
+			new Date(2009, 11, 13),
+			['running', 'biking', new String('programming')],
+			{ a: 47 },
+		]
 		testEqual(a, b) // Arrays containing nested arrays and objects are recursively compared
 
 		// Overwrite the methods defined in ES 5.1 section 15.4.4.
@@ -252,7 +277,7 @@ describe('equal', () => {
 		testEqual(Array(3), Array(3)) // Sparse arrays of identical lengths are equal
 		testEqual(Array(3), Array(6)) // Sparse arrays of different lengths are not equal when both are empty
 
-		let sparse: any[] = []
+		const sparse: any[] = []
 		sparse[1] = 5
 		testEqual(sparse, [void 0, 5]) // Handles sparse arrays as dense
 	})
@@ -267,7 +292,7 @@ describe('equal', () => {
 		testEqual({ x: 1, y: void 0 }, { x: 1, z: 2 }) // Objects with identical keys and different values are not equivalent
 
 		// `A` contains nested objects and arrays.
-		let a = {
+		const a = {
 			name: new String('Moe Howard'),
 			age: new Number(77),
 			stooge: true,
@@ -277,12 +302,12 @@ describe('equal', () => {
 				release: new Date(1947, 9, 30),
 				stars: [new String('Larry Fine'), 'Shemp Howard'],
 				minutes: new Number(16),
-				seconds: 54
-			}
+				seconds: 54,
+			},
 		}
 
 		// `B` contains equivalent nested objects and arrays.
-		let b = {
+		const b = {
 			name: new String('Moe Howard'),
 			age: new Number(77),
 			stooge: true,
@@ -292,8 +317,8 @@ describe('equal', () => {
 				release: new Date(1947, 9, 30),
 				stars: [new String('Larry Fine'), 'Shemp Howard'],
 				minutes: new Number(16),
-				seconds: 54
-			}
+				seconds: 54,
+			},
 		}
 		testEqual(a, b) // Objects with nested equivalent members are recursively compared
 	})
@@ -306,9 +331,9 @@ describe('equal', () => {
 	})
 
 	test('Circular Arrays.', () => {
-		let a: any[] = []
+		const a: any[] = []
 		a.push(a)
-		let b: any[] = []
+		const b: any[] = []
 		b.push(b)
 
 		testEqual(a, b) // Arrays containing circular references are equal
@@ -321,16 +346,16 @@ describe('equal', () => {
 	})
 
 	test('More circular arrays #767.', () => {
-		let a: any = ['everything is checked but', 'this', 'is not']
+		const a: any = ['everything is checked but', 'this', 'is not']
 		a[1] = a
-		let b = ['everything is checked but', ['this', 'array'], 'is not']
+		const b = ['everything is checked but', ['this', 'array'], 'is not']
 
 		testEqual(a, b) // Comparison of circular references with non-circular references are not equal
 	})
 
 	test('Circular Objects.', () => {
-		let a: any = { abc: null }
-		let b: any = { abc: null }
+		const a: any = { abc: null }
+		const b: any = { abc: null }
 		a.abc = a
 		b.abc = b
 		testEqual(a, b) // Objects containing circular references are equal
@@ -343,15 +368,15 @@ describe('equal', () => {
 	})
 
 	test('More circular objects #767.', () => {
-		let a: any = { everything: 'is checked', but: 'this', is: 'not' }
+		const a: any = { everything: 'is checked', but: 'this', is: 'not' }
 		a.but = a
-		let b: any = { everything: 'is checked', but: { that: 'object' }, is: 'not' }
+		const b: any = { everything: 'is checked', but: { that: 'object' }, is: 'not' }
 		testEqual(a, b) // Comparison of circular references with non-circular object references are not equal
 	})
 
 	test('Cyclic Structures.', () => {
-		let a: any = [{ abc: null }]
-		let b: any = [{ abc: null }]
+		const a: any = [{ abc: null }]
+		const b: any = [{ abc: null }]
 
 		a[0].abc = a
 		a.push(a)
@@ -367,8 +392,8 @@ describe('equal', () => {
 	})
 
 	test('Complex Circular References.', () => {
-		let a: any = { foo: { b: { foo: { c: { foo: null } } } } }
-		let b: any = { foo: { b: { foo: { c: { foo: null } } } } }
+		const a: any = { foo: { b: { foo: { c: { foo: null } } } } }
+		const b: any = { foo: { b: { foo: { c: { foo: null } } } } }
 		a.foo.b.foo.c.foo = a
 		b.foo.b.foo.c.foo = b
 		testEqual(a, b) // Cyclic structures with nested and identically-named properties are equal
@@ -376,8 +401,8 @@ describe('equal', () => {
 
 	test('Chaining.', () => {
 		testEqual(_({ x: 1, y: void 0 }).chain(), _({ x: 1, z: 2 }).chain()) // Chained objects containing different values are not equal
-		let a = _({ x: 1, y: 2 }).chain()
-		let b = _({ x: 1, y: 2 }).chain()
+		const a = _({ x: 1, y: 2 }).chain()
+		const b = _({ x: 1, y: 2 }).chain()
 		// assert.strictEqual(equal(a.isEqual(b), _(true)), true, '`isEqual` can be chained
 		testEqual(a.isEqual(b), _(true)) // `isEqual` can be chained
 	})
@@ -391,13 +416,13 @@ describe('equal', () => {
 			testEqual(a, b) // Handles objects without a constructor (e.g. from Object.create
 		}
 
-		function Foo () {
-			/// @ts-ignore
-			this.a = 1
+		class Foo {
+			a = 1
 		}
+		// @ts-expect-error: remove constructor
 		Foo.prototype.constructor = null
 
-		let other = { a: 1 }
+		const other = { a: 1 }
 		// assert.strictEqual(equal(new Foo, other), false, 'Objects from different constructors are not equal')
 		testEqual(new Foo(), other) // Objects from different constructors are not equal
 	})
@@ -408,9 +433,9 @@ describe('equal', () => {
 		testEqual([NaN], [NaN])
 		testEqual({ a: NaN }, { a: NaN })
 
-		let symbol = Symbol('x')
-		testEqual(symbol, symbol)  // A symbol is equal to itself
-		testEqual(symbol, Object(symbol))  // Even when wrapped in Object()
+		const symbol = Symbol('x')
+		testEqual(symbol, symbol) // A symbol is equal to itself
+		testEqual(symbol, Object(symbol)) // Even when wrapped in Object()
 
 		/*
 		testEqual(symbol, null)  // Different types are not equal
@@ -421,7 +446,6 @@ describe('equal', () => {
 		let sameStringSymbol = Symbol('x')
 		testEqual(symbol, sameStringSymbol)  // Different symbols of same string are not equal
 		*/
-
 	})
 
 	// testEqual(0).toEqual(1)

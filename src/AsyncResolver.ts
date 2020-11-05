@@ -4,62 +4,50 @@ import {
 	ResolvedTimeline,
 	ResolvedTimelineObject,
 	ResolvedStates,
-	ResolverCache
+	ResolverCache,
 } from 'superfly-timeline'
 import _ = require('underscore')
-import {
-	TimelineTriggerTimeResult
-} from './conductor'
+import { TimelineTriggerTimeResult } from './conductor'
 import { TSRTimeline, TSRTimelineObj } from './types/src'
 
 export class AsyncResolver {
-
 	private readonly onSetTimelineTriggerTime: (res: TimelineTriggerTimeResult) => void
 
 	private cache: ResolverCache = {}
 
-	public constructor (onSetTimelineTriggerTime: (res: TimelineTriggerTimeResult) => void) {
+	public constructor(onSetTimelineTriggerTime: (res: TimelineTriggerTimeResult) => void) {
 		this.onSetTimelineTriggerTime = onSetTimelineTriggerTime
 	}
 
-	public async resolveTimeline (
-		resolveTime: number,
-		timeline: TSRTimeline,
-		limitTime: number,
-		useCache: boolean
-	) {
-
-		let objectsFixed = this._fixNowObjects(timeline, resolveTime)
+	public async resolveTimeline(resolveTime: number, timeline: TSRTimeline, limitTime: number, useCache: boolean) {
+		const objectsFixed = this._fixNowObjects(timeline, resolveTime)
 
 		const resolvedTimeline = Resolver.resolveTimeline(timeline, {
 			limitCount: 999,
 			limitTime: limitTime,
 			time: resolveTime,
-			cache: useCache ? this.cache : undefined
+			cache: useCache ? this.cache : undefined,
 		})
 
 		const resolvedStates = Resolver.resolveAllStates(resolvedTimeline)
 
 		return {
 			resolvedStates,
-			objectsFixed
+			objectsFixed,
 		}
 	}
-	public async getState (
-		resolved: ResolvedStates,
-		resolveTime: number
-	) {
+	public async getState(resolved: ResolvedStates, resolveTime: number) {
 		return Resolver.getState(resolved, resolveTime)
 	}
 
-	private _fixNowObjects (timeline: TSRTimeline, now: number): TimelineTriggerTimeResult {
-		let objectsFixed: Array<{
-			id: string,
+	private _fixNowObjects(timeline: TSRTimeline, now: number): TimelineTriggerTimeResult {
+		const objectsFixed: Array<{
+			id: string
 			time: number
 		}> = []
-		const timeLineMap: {[id: string]: TSRTimelineObj} = {}
+		const timeLineMap: { [id: string]: TSRTimelineObj } = {}
 
-		let setObjectTime = (o: TSRTimelineObj, time: number) => {
+		const setObjectTime = (o: TSRTimelineObj, time: number) => {
 			if (!_.isArray(o.enable)) {
 				o.enable.start = time // set the objects to "now" so that they are resolved correctly temporarily
 				const o2 = timeLineMap[o.id]
@@ -69,7 +57,7 @@ export class AsyncResolver {
 
 				objectsFixed.push({
 					id: o.id,
-					time: time
+					time: time,
 				})
 			}
 		}
@@ -88,23 +76,18 @@ export class AsyncResolver {
 		})
 
 		// Then, resolve the timeline to be able to set "now" inside groups, relative to parents:
-		let dontIterateAgain: boolean = false
-		let wouldLikeToIterateAgain: boolean = false
+		let dontIterateAgain = false
+		let wouldLikeToIterateAgain = false
 
 		let resolvedTimeline: ResolvedTimeline
-		let fixObjects = (objs: TimelineObject[], parentObject?: TimelineObject) => {
-
+		const fixObjects = (objs: TimelineObject[], parentObject?: TimelineObject) => {
 			_.each(objs, (o: TSRTimelineObj) => {
-				if (
-					!_.isArray(o.enable) &&
-					o.enable.start === 'now'
-				) {
+				if (!_.isArray(o.enable) && o.enable.start === 'now') {
 					// find parent, and set relative to that
 					if (parentObject) {
+						const resolvedParent: ResolvedTimelineObject = resolvedTimeline.objects[parentObject.id]
 
-						let resolvedParent: ResolvedTimelineObject = resolvedTimeline.objects[parentObject.id]
-
-						let parentInstance = resolvedParent.resolved.instances[0]
+						const parentInstance = resolvedParent.resolved.instances[0]
 						if (resolvedParent.resolved.resolved && parentInstance) {
 							dontIterateAgain = false
 							setObjectTime(o, now - (parentInstance.originalStart || parentInstance.start))
@@ -129,7 +112,7 @@ export class AsyncResolver {
 			dontIterateAgain = true
 
 			resolvedTimeline = Resolver.resolveTimeline(_.values(timeLineMap), {
-				time: now
+				time: now,
 			})
 
 			fixObjects(_.values(resolvedTimeline.objects))

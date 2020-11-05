@@ -5,11 +5,11 @@ const TIMEOUT = 3000 // ms
 const RETRY_TIMEOUT = 5000 // ms
 
 export class ShotokuAPI extends EventEmitter {
-	private _tcpClient: Socket | null = null
-	private _connected: boolean = false
-	private _host: string
-	private _port: number
-	private _setDisconnected: boolean = false // set to true if disconnect() has been called (then do not trye to reconnect)
+	private _tcpClient?: Socket | undefined = undefined
+	private _connected = false
+	private _host: string = ''
+	private _port: number = 0
+	private _setDisconnected = false // set to true if disconnect() has been called (then do not trye to reconnect)
 	private _retryConnectTimeout: NodeJS.Timer | undefined
 
 	/**
@@ -17,40 +17,39 @@ export class ShotokuAPI extends EventEmitter {
 	 * @param host ip to connect to
 	 * @param port port the osc server is hosted on
 	 */
-	async connect (host: string, port: number): Promise<void> {
+	async connect(host: string, port: number): Promise<void> {
 		this._host = host
 		this._port = port
 
 		return this._connectTCPClient()
 	}
-	async dispose () {
+	async dispose() {
 		return this._disconnectTCPClient()
 	}
 
-	get connected (): boolean {
+	get connected(): boolean {
 		return this._connected
 	}
 
-	send (command: ShotokuCommand) {
+	send(command: ShotokuCommand) {
 		const codes = {
 			[ShotokuCommandType.Fade]: 0x01,
-			[ShotokuCommandType.Cut]: 0x02
+			[ShotokuCommandType.Cut]: 0x02,
 		}
 		let commandCode = codes[command.type]
 		const show = command.show || 1
 
 		if (command.changeOperatorScreen) commandCode += 0x20
 
-		const cmd = [0xF9, 0x01, commandCode, 0x00, show, command.shot, 0x00, 0x00]
+		const cmd = [0xf9, 0x01, commandCode, 0x00, show, command.shot, 0x00, 0x00]
 
 		cmd.push(0x40 - cmd.reduce((a, b) => a + b)) // add checksum
 
 		return this._sendTCPMessage(Buffer.from(cmd))
 	}
 
-	private _setConnected (connected: boolean) {
+	private _setConnected(connected: boolean) {
 		if (this._connected !== connected) {
-
 			this._connected = connected
 
 			if (!connected) {
@@ -61,28 +60,27 @@ export class ShotokuAPI extends EventEmitter {
 			}
 		}
 	}
-	private _triggerRetryConnection () {
+	private _triggerRetryConnection() {
 		if (!this._retryConnectTimeout) {
 			this._retryConnectTimeout = setTimeout(() => {
 				this._retryConnection()
 			}, RETRY_TIMEOUT)
 		}
 	}
-	private _retryConnection () {
+	private _retryConnection() {
 		if (this._retryConnectTimeout) {
 			clearTimeout(this._retryConnectTimeout)
 			this._retryConnectTimeout = undefined
 		}
 
 		if (!this.connected && !this._setDisconnected) {
-			this._connectTCPClient()
-			.catch((err) => {
+			this._connectTCPClient().catch((err) => {
 				this.emit('error', 'reconnect TCP', err)
 			})
 		}
 	}
 
-	private _disconnectTCPClient (): Promise<void> {
+	private _disconnectTCPClient(): Promise<void> {
 		return new Promise((resolve) => {
 			this._setDisconnected = true
 			if (this._tcpClient) {
@@ -110,20 +108,19 @@ export class ShotokuAPI extends EventEmitter {
 			} else {
 				resolve()
 			}
-		})
-		.then(() => {
+		}).then(() => {
 			if (this._tcpClient) {
 				this._tcpClient.removeAllListeners('connect')
 				this._tcpClient.removeAllListeners('close')
 				this._tcpClient.removeAllListeners('end')
 				this._tcpClient.removeAllListeners('error')
 
-				this._tcpClient = null
+				this._tcpClient = undefined
 			}
 			this._setConnected(false)
 		})
 	}
-	private _connectTCPClient (): Promise<void> {
+	private _connectTCPClient(): Promise<void> {
 		this._setDisconnected = false
 
 		if (!this._tcpClient) {
@@ -169,7 +166,7 @@ export class ShotokuAPI extends EventEmitter {
 			return Promise.resolve()
 		}
 	}
-	private async _sendTCPMessage (message: Buffer): Promise<void> {
+	private async _sendTCPMessage(message: Buffer): Promise<void> {
 		// Do we have a client?
 		if (this._tcpClient) {
 			this._tcpClient.write(message)
@@ -186,5 +183,5 @@ export interface ShotokuCommand {
 
 export enum ShotokuCommandType {
 	Cut = 'cut',
-	Fade = 'fade'
+	Fade = 'fade',
 }

@@ -4,7 +4,7 @@ const MockOSC = OSC.MockOSC
 
 const orgSetTimeout = setTimeout
 
-function wait (time: number = 1) {
+function wait(time = 1) {
 	return new Promise((resolve) => {
 		orgSetTimeout(resolve, time)
 	})
@@ -16,13 +16,12 @@ describe('SisyfosAPI', () => {
 		jest.useFakeTimers()
 	})
 	test('Connectivity', async () => {
+		const onError = jest.fn()
+		const onInitialized = jest.fn()
+		const onConnected = jest.fn()
+		const onDisconnected = jest.fn()
 
-		let onError = jest.fn()
-		let onInitialized = jest.fn()
-		let onConnected = jest.fn()
-		let onDisconnected = jest.fn()
-
-		let sisyfos = new SisyfosApi()
+		const sisyfos = new SisyfosApi()
 		sisyfos.on('error', onError)
 		sisyfos.on('initialized', onInitialized)
 		sisyfos.on('connected', onConnected)
@@ -63,12 +62,12 @@ describe('SisyfosAPI', () => {
 		expect(onError).toHaveBeenCalledTimes(0)
 	})
 	// test('Functionality', async () => {
-		// todo:
+	// todo:
 
-		// Commands.TOGGLE_PGM
-		// Commands.TOGGLE_PST
-		// Commands.SET_FADER
-		// Commands.TAKE
+	// Commands.TOGGLE_PGM
+	// Commands.TOGGLE_PST
+	// Commands.SET_FADER
+	// Commands.TAKE
 
 	// })
 })

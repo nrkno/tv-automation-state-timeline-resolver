@@ -3,7 +3,7 @@ import {
 	DeviceType,
 	MappingShotoku,
 	TimelineContentTypeShotoku,
-	ShotokuTransitionType
+	ShotokuTransitionType,
 } from '../../types/src'
 import { Conductor } from '../../conductor'
 import { Socket as MockSocket } from 'net'
@@ -12,9 +12,9 @@ import { MockTime } from '../../__tests__/mockTime'
 import { ShotokuDevice } from '../shotoku'
 
 jest.mock('net')
-let setTimeoutOrg = setTimeout
+const setTimeoutOrg = setTimeout
 
-function waitALittleBit () {
+function waitALittleBit() {
 	return new Promise((resolve) => {
 		setTimeoutOrg(resolve, 10)
 	})
@@ -22,7 +22,7 @@ function waitALittleBit () {
 
 // let nowActual = Date.now()
 describe('Shotoku', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 	beforeAll(() => {
 		mockTime.mockDateNow()
 	})
@@ -30,21 +30,19 @@ describe('Shotoku', () => {
 		mockTime.init()
 	})
 	// afterEach(() => {})
-	async function testShots (cmd?: ShotokuTransitionType) {
+	async function testShots(cmd?: ShotokuTransitionType) {
 		const commandReceiver0: any = jest.fn((time, cmd, context) => {
 			// return Promise.resolve()
-			// @ts-ignore
-			device._defaultCommandReceiver(time, cmd, context)
+			;(device as any)['_defaultCommandReceiver'](time, cmd, context)
 		})
 
-		let onSocketCreate = jest.fn()
-		let onConnection = jest.fn()
-		let onSocketClose = jest.fn()
-		let onSocketWrite = jest.fn()
-		let onConnectionChanged = jest.fn()
+		const onSocketCreate = jest.fn()
+		const onConnection = jest.fn()
+		const onSocketClose = jest.fn()
+		const onSocketWrite = jest.fn()
+		const onConnectionChanged = jest.fn()
 
-		// @ts-ignore MockSocket
-		MockSocket.mockOnNextSocket((socket: any) => {
+		;(MockSocket as any).mockOnNextSocket((socket: any) => {
 			onSocketCreate(onSocketCreate)
 
 			socket.onConnect = onConnection
@@ -52,19 +50,19 @@ describe('Shotoku', () => {
 			socket.onClose = onSocketClose
 		})
 
-		let myLayerMapping0: MappingShotoku = {
+		const myLayerMapping0: MappingShotoku = {
 			device: DeviceType.SHOTOKU,
-			deviceId: 'myShotoku'
+			deviceId: 'myShotoku',
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: () => mockTime.now
+			getCurrentTime: () => mockTime.now,
 		})
-		let onError = jest.fn(console.log)
+		const onError = jest.fn(console.log)
 		myConductor.on('error', onError)
 		await myConductor.init()
 
@@ -74,24 +72,19 @@ describe('Shotoku', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.1',
-				port: 1234
-			}
+				port: 1234,
+			},
 		})
 
 		expect(onSocketCreate).toHaveBeenCalledTimes(1)
-
-		// @ts-ignore
-		// let sockets = MockSocket.mockSockets()
-		// expect(sockets).toHaveLength(1)
-		// let socket = sockets[0]
 
 		myConductor.setTimelineAndMappings([], myLayerMapping)
 		await mockTime.advanceTimeToTicks(10100) // 10100
 		expect(mockTime.now).toEqual(10100)
 		expect(onConnection).toHaveBeenCalledTimes(1)
 
-		let deviceContainer = myConductor.getDevice('myShotoku')
-		let device = deviceContainer.device as ThreadedClass<ShotokuDevice>
+		const deviceContainer = myConductor.getDevice('myShotoku')
+		const device = deviceContainer.device as ThreadedClass<ShotokuDevice>
 
 		await device.on('connectionChanged', onConnectionChanged)
 
@@ -107,7 +100,7 @@ describe('Shotoku', () => {
 				id: 'obj0',
 				enable: {
 					start: 11000,
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'myLayer0',
 				content: {
@@ -115,9 +108,9 @@ describe('Shotoku', () => {
 					type: TimelineContentTypeShotoku.SHOT,
 
 					shot: 1,
-					transitionType: cmd
-				}
-			}
+					transitionType: cmd,
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(10990)
@@ -130,15 +123,19 @@ describe('Shotoku', () => {
 			show: undefined,
 			shot: 1,
 			type: cmd || 'cut',
-			changeOperatorScreen: undefined
+			changeOperatorScreen: undefined,
 		})
 		expect(commandReceiver0.mock.calls[0][2]).toMatch(/added: obj0/)
 		await waitALittleBit()
 		expect(onSocketWrite).toHaveBeenCalledTimes(1)
 		if (cmd === ShotokuTransitionType.Fade) {
-			expect(onSocketWrite.mock.calls[0][0]).toEqual(Buffer.from([0xf9, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x43]))
+			expect(onSocketWrite.mock.calls[0][0]).toEqual(
+				Buffer.from([0xf9, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x43])
+			)
 		} else {
-			expect(onSocketWrite.mock.calls[0][0]).toEqual(Buffer.from([0xf9, 0x01, 0x02, 0x00, 0x01, 0x01, 0x00, 0x00, 0x42]))
+			expect(onSocketWrite.mock.calls[0][0]).toEqual(
+				Buffer.from([0xf9, 0x01, 0x02, 0x00, 0x01, 0x01, 0x00, 0x00, 0x42])
+			)
 		}
 		// Test Changed object:
 		myConductor.setTimelineAndMappings([
@@ -146,7 +143,7 @@ describe('Shotoku', () => {
 				id: 'obj0',
 				enable: {
 					start: 11000,
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'myLayer0',
 				content: {
@@ -155,9 +152,9 @@ describe('Shotoku', () => {
 
 					shot: 255, // max
 					changeOperatorScreen: true,
-					transitionType: cmd
-				}
-			}
+					transitionType: cmd,
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(12000) // 12000
@@ -166,15 +163,19 @@ describe('Shotoku', () => {
 			show: undefined,
 			shot: 255,
 			type: cmd || 'cut',
-			changeOperatorScreen: true
+			changeOperatorScreen: true,
 		})
 		expect(commandReceiver0.mock.calls[1][2]).toMatch(/added: obj0/)
 		await waitALittleBit() // allow for async socket events to fire
 		expect(onSocketWrite).toHaveBeenCalledTimes(2)
 		if (cmd === ShotokuTransitionType.Fade) {
-			expect(onSocketWrite.mock.calls[1][0]).toEqual(Buffer.from([0xf9, 0x01, 0x21, 0x00, 0x01, 0xff, 0x00, 0x00, 0x25]))
+			expect(onSocketWrite.mock.calls[1][0]).toEqual(
+				Buffer.from([0xf9, 0x01, 0x21, 0x00, 0x01, 0xff, 0x00, 0x00, 0x25])
+			)
 		} else {
-			expect(onSocketWrite.mock.calls[1][0]).toEqual(Buffer.from([0xf9, 0x01, 0x22, 0x00, 0x01, 0xff, 0x00, 0x00, 0x24]))
+			expect(onSocketWrite.mock.calls[1][0]).toEqual(
+				Buffer.from([0xf9, 0x01, 0x22, 0x00, 0x01, 0xff, 0x00, 0x00, 0x24])
+			)
 		}
 
 		myConductor.setTimelineAndMappings([])

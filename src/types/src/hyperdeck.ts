@@ -2,12 +2,12 @@ import { Mapping } from './mapping'
 import { TSRTimelineObjBase, DeviceType } from '.'
 
 export interface MappingHyperdeck extends Mapping {
-	device: DeviceType.HYPERDECK,
+	device: DeviceType.HYPERDECK
 	mappingType: MappingHyperdeckType
 	index?: number
 }
 export enum MappingHyperdeckType {
-	TRANSPORT = 'transport'
+	TRANSPORT = 'transport',
 }
 
 export interface HyperdeckOptions {
@@ -17,7 +17,7 @@ export interface HyperdeckOptions {
 }
 
 export enum TimelineContentTypeHyperdeck {
-	TRANSPORT = 'transport'
+	TRANSPORT = 'transport',
 }
 
 // Note: These are copied from hyperdeck-connection -----------
@@ -29,17 +29,17 @@ export enum TransportStatus {
 	REWIND = 'rewind',
 	JOG = 'jog',
 	SHUTTLE = 'shuttle',
-	RECORD = 'record'
+	RECORD = 'record',
 }
 export enum SlotId {
 	ONE = 1,
-	TWO = 2
+	TWO = 2,
 }
 export enum SlotStatus {
 	EMPTY = 'empty',
 	MOUNTING = 'mounting',
 	ERROR = 'error',
-	MOUNTED = 'mounted'
+	MOUNTED = 'mounted',
 }
 export enum VideoFormat {
 	NTSC = 'NTSC',
@@ -64,7 +64,7 @@ export enum VideoFormat {
 	_4Kp30 = '4Kp30',
 	_4Kp50 = '4Kp50',
 	_4Kp5994 = '4Kp5994',
-	_4Kp60 = '4Kp60'
+	_4Kp60 = '4Kp60',
 }
 // -------------------------------------------------------------
 
@@ -80,7 +80,7 @@ export interface TimelineObjHyperdeck extends TSRTimelineObjBase {
 export interface TimelineObjHyperdeckTransport extends TimelineObjHyperdeck {
 	content: {
 		deviceType: DeviceType.HYPERDECK
-		type: TimelineContentTypeHyperdeck.TRANSPORT,
+		type: TimelineContentTypeHyperdeck.TRANSPORT
 
 		/** The status of the hyperdeck. To start a recording, set to TransportStatus.RECORD */
 		status: TransportStatus

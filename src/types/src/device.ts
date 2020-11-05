@@ -15,7 +15,7 @@ import {
 	PanasonicPTZOptions,
 	HTTPWatcherOptions,
 	VizMSEOptions,
-	VMixOptions
+	VMixOptions,
 } from '.'
 import { ShotokuOptions } from './shotoku'
 
@@ -35,42 +35,44 @@ export interface SlowReportOptions {
 	limitSlowFulfilledCommand?: number
 }
 
-export type DeviceOptionsAny = DeviceOptionsAbstract |
-	DeviceOptionsCasparCG |
-	DeviceOptionsAtem |
-	DeviceOptionsLawo |
-	DeviceOptionsHTTPSend |
-	DeviceOptionsPanasonicPTZ |
-	DeviceOptionsTCPSend |
-	DeviceOptionsHyperdeck |
-	DeviceOptionsPharos |
-	DeviceOptionsOSC |
-	DeviceOptionsHTTPpWatcher |
-	DeviceOptionsSisyfos |
-	DeviceOptionsQuantel |
-	DeviceOptionsSingularLive |
-	DeviceOptionsVMix |
-	DeviceOptionsVizMSE |
-	DeviceOptionsSingularLive |
-	DeviceOptionsShotoku
+export type DeviceOptionsAny =
+	| DeviceOptionsAbstract
+	| DeviceOptionsCasparCG
+	| DeviceOptionsAtem
+	| DeviceOptionsLawo
+	| DeviceOptionsHTTPSend
+	| DeviceOptionsPanasonicPTZ
+	| DeviceOptionsTCPSend
+	| DeviceOptionsHyperdeck
+	| DeviceOptionsPharos
+	| DeviceOptionsOSC
+	| DeviceOptionsHTTPpWatcher
+	| DeviceOptionsSisyfos
+	| DeviceOptionsQuantel
+	| DeviceOptionsSingularLive
+	| DeviceOptionsVMix
+	| DeviceOptionsVizMSE
+	| DeviceOptionsSingularLive
+	| DeviceOptionsShotoku
 
-export type DeviceInitOptions = AbstractOptions |
-	CasparCGOptions |
-	AtemOptions |
-	LawoOptions |
-	HTTPSendOptions |
-	PanasonicPTZOptions |
-	TCPSendOptions |
-	HyperdeckOptions |
-	PharosOptions |
-	OSCOptions |
-	HTTPWatcherOptions |
-	SisyfosOptions |
-	QuantelOptions |
-	SingularLiveOptions |
-	VMixOptions |
-	VizMSEOptions |
-	SingularLiveOptions
+export type DeviceInitOptions =
+	| AbstractOptions
+	| CasparCGOptions
+	| AtemOptions
+	| LawoOptions
+	| HTTPSendOptions
+	| PanasonicPTZOptions
+	| TCPSendOptions
+	| HyperdeckOptions
+	| PharosOptions
+	| OSCOptions
+	| HTTPWatcherOptions
+	| SisyfosOptions
+	| QuantelOptions
+	| SingularLiveOptions
+	| VMixOptions
+	| VizMSEOptions
+	| SingularLiveOptions
 
 export interface DeviceOptionsAbstract extends DeviceOptionsBase {
 	type: DeviceType.ABSTRACT

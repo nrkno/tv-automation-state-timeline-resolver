@@ -4,7 +4,7 @@
 export enum EventType {
 	START = 0,
 	END = 1,
-	KEYFRAME = 2
+	KEYFRAME = 2,
 }
 // Api ------------------------------------------------------------
 /** Unix timestamp */
@@ -74,8 +74,7 @@ export interface TimelineKeyframe {
 	content: Content
 	disabled?: boolean
 }
-export interface TimelineObjectKeyframe extends TimelineObject, TimelineKeyframe {
-}
+export interface TimelineObjectKeyframe extends TimelineObject, TimelineKeyframe {}
 export interface ResolvedTimeline {
 	/** The options used to resolve the timeline */
 	options: ResolveOptions
@@ -208,9 +207,9 @@ export declare class Resolver {
 	 * @param timeline Array of timeline objects
 	 * @param options Resolve options
 	 */
-	static resolveTimeline (timeline: Array<TimelineObject>, options: ResolveOptions): ResolvedTimeline
+	static resolveTimeline(timeline: Array<TimelineObject>, options: ResolveOptions): ResolvedTimeline
 	/** Calculate the state for all points in time.  */
-	static resolveAllStates (resolvedTimeline: ResolvedTimeline): ResolvedStates
+	static resolveAllStates(resolvedTimeline: ResolvedTimeline): ResolvedStates
 	/**
 	 * Calculate the state at a given point in time.
 	 * Using a ResolvedTimeline calculated by Resolver.resolveTimeline() or
@@ -219,8 +218,13 @@ export declare class Resolver {
 	 * @param time The point in time where to calculate the state
 	 * @param eventLimit (Optional) Limits the number of returned upcoming events.
 	 */
-	static getState (resolved: ResolvedTimeline | ResolvedStates, time: Time, eventLimit?: number): TimelineState
+	static getState(resolved: ResolvedTimeline | ResolvedStates, time: Time, eventLimit?: number): TimelineState
 }
-export declare function resolveTimelineObj (resolvedTimeline: ResolvedTimeline, obj: ResolvedTimelineObject): void
+export declare function resolveTimelineObj(resolvedTimeline: ResolvedTimeline, obj: ResolvedTimelineObject): void
 declare type ObjectRefType = 'start' | 'end' | 'duration'
-export declare function lookupExpression (resolvedTimeline: ResolvedTimeline, obj: TimelineObject, expr: Expression | null, context: ObjectRefType): Array<TimelineObjectInstance> | ValueWithReference | null
+export declare function lookupExpression(
+	resolvedTimeline: ResolvedTimeline,
+	obj: TimelineObject,
+	expr: Expression | null,
+	context: ObjectRefType
+): Array<TimelineObjectInstance> | ValueWithReference | null

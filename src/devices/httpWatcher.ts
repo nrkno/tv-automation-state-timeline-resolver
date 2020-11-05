@@ -1,27 +1,17 @@
-import * as _ from 'underscore'
-import {
-	DeviceStatus,
-	StatusCode,
-	Device,
-	IDevice
-} from './device'
+import { DeviceStatus, StatusCode, Device, IDevice } from './device'
 import {
 	DeviceType,
 	TimelineContentTypeHTTP,
 	HTTPWatcherOptions,
 	DeviceOptionsHTTPpWatcher,
-	Mappings
+	Mappings,
 } from '../types/src'
 import * as request from 'request'
 
-import {
-	TimelineState
-} from 'superfly-timeline'
+import { TimelineState } from 'superfly-timeline'
 
 export interface DeviceOptionsHTTPWatcherInternal extends DeviceOptionsHTTPpWatcher {
-	options: (
-		DeviceOptionsHTTPpWatcher['options']
-	)
+	options: DeviceOptionsHTTPpWatcher['options']
 }
 
 /**
@@ -37,8 +27,12 @@ export class HTTPWatcherDevice extends Device implements IDevice {
 	private interval: NodeJS.Timer | undefined
 	private status: StatusCode = StatusCode.UNKNOWN
 	private statusReason: string | undefined
-	constructor (deviceId: string, deviceOptions: DeviceOptionsHTTPWatcherInternal, options) {
-		super(deviceId, deviceOptions, options)
+	constructor(
+		deviceId: string,
+		deviceOptions: DeviceOptionsHTTPWatcherInternal,
+		getCurrentTime: () => Promise<number>
+	) {
+		super(deviceId, deviceOptions, getCurrentTime)
 		const opts = deviceOptions.options || {}
 		switch (opts.httpMethod) {
 			case 'post':
@@ -63,86 +57,75 @@ export class HTTPWatcherDevice extends Device implements IDevice {
 		this.uri = opts.uri
 	}
 
-	onInterval () {
+	onInterval() {
 		if (!this.uri) {
 			this._setStatus(StatusCode.BAD, 'URI not set')
 			return
 		}
-		let reqMethod = request[this.httpMethod]
+		const reqMethod = request[this.httpMethod]
 		if (reqMethod) {
-			reqMethod(
-				this.uri,
-				{},
-				this.handleResponse.bind(this)
-			)
+			reqMethod(this.uri, {}, this.handleResponse.bind(this))
 		} else {
 			this._setStatus(StatusCode.BAD, `Bad request method: "${this.httpMethod}"`)
 		}
 	}
-	stopInterval () {
+	stopInterval() {
 		if (this.interval) {
 			clearInterval(this.interval)
 			this.interval = undefined
 		}
 	}
-	startInterval () {
+	startInterval() {
 		this.stopInterval()
 		this.interval = setInterval(this.onInterval.bind(this), this.intervalTime)
 	}
 
-	handleResponse (error: any, response: request.Response, body: any) {
+	handleResponse(error: any, response: request.Response, body: any) {
 		if (error) {
 			this._setStatus(StatusCode.BAD, error.toString() || 'Unknown')
-		} else if (
-			this.expectedHttpResponse &&
-			this.expectedHttpResponse !== response.statusCode
-		) {
-			this._setStatus(StatusCode.BAD, `Expected status code ${this.expectedHttpResponse}, got ${response.statusCode}`)
-		} else if (
-			this.keyword &&
-			body &&
-			(body.toString() || '').indexOf(this.keyword) === -1
-		) {
+		} else if (this.expectedHttpResponse && this.expectedHttpResponse !== response.statusCode) {
+			this._setStatus(
+				StatusCode.BAD,
+				`Expected status code ${this.expectedHttpResponse}, got ${response.statusCode}`
+			)
+		} else if (this.keyword && body && (body.toString() || '').indexOf(this.keyword) === -1) {
 			this._setStatus(StatusCode.BAD, `Expected keyword "${this.keyword}" not found`)
 		} else {
 			this._setStatus(StatusCode.GOOD)
 		}
 	}
 
-	init (_initOptions: HTTPWatcherOptions): Promise<boolean> {
+	init(_initOptions: HTTPWatcherOptions): Promise<boolean> {
 		this.startInterval()
 
 		return Promise.resolve(true)
 	}
 	/** Called by the Conductor a bit before a .handleState is called */
-	prepareForHandleState (_newStateTime: number) {
+	prepareForHandleState(_newStateTime: number) {
 		// NOP
 	}
-	handleState (newState: TimelineState, newMappings: Mappings) {
+	handleState(newState: TimelineState, newMappings: Mappings) {
 		super.onHandleState(newState, newMappings)
 		// NOP
 	}
-	clearFuture (_clearAfterTime: number) {
+	clearFuture(_clearAfterTime: number) {
 		// NOP
 	}
-	getStatus (): DeviceStatus {
-		let s: DeviceStatus = {
+	getStatus(): DeviceStatus {
+		const s: DeviceStatus = {
 			statusCode: this.status,
-			active: true // since this is not using any mappings, it's considered to be always active
+			active: true, // since this is not using any mappings, it's considered to be always active
 		}
 		if (this.statusReason) s.messages = [this.statusReason]
 		return s
 	}
-	terminate (): Promise<boolean> {
+	terminate(): Promise<boolean> {
 		this.stopInterval()
 
 		return Promise.resolve(true)
 	}
-	private _setStatus (status: StatusCode, reason?: string) {
-		if (
-			this.status !== status ||
-			this.statusReason !== reason
-		) {
+	private _setStatus(status: StatusCode, reason?: string) {
+		if (this.status !== status || this.statusReason !== reason) {
 			this.status = status
 			this.statusReason = reason
 
@@ -150,16 +133,16 @@ export class HTTPWatcherDevice extends Device implements IDevice {
 		}
 	}
 
-	get canConnect (): boolean {
+	get canConnect(): boolean {
 		return false
 	}
-	get connected (): boolean {
+	get connected(): boolean {
 		return false
 	}
-	get deviceType () {
+	get deviceType() {
 		return DeviceType.HTTPWATCHER
 	}
-	get deviceName (): string {
+	get deviceName(): string {
 		return 'HTTP-Watch ' + this.deviceId
 	}
 }

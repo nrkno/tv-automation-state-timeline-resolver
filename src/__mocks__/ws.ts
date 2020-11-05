@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 const orgSetTimeout = setTimeout
 
 const instances: Array<WebSocket> = []
-let mockConstructor: Function
+let mockConstructor: (WebSocket: WebSocket) => void
 
 class WebSocket extends EventEmitter {
 	public CONNECTING = 1
@@ -11,19 +11,19 @@ class WebSocket extends EventEmitter {
 	public CLOSING = 3
 	public CLOSED = 4
 
-	public binaryType: string = ''
+	public binaryType = ''
 	private _pathName: string
 
-	private _mockHost: string = 'ws://127.0.0.1'
-	private _mockConnect: boolean = true
-	private _emittedConnected: boolean = false
-	private _hasEmittedConnected: boolean = false
-	private _failConnectEmitTimeout: number = 3000
-	private _replyFunction?: Function
+	private _mockHost = 'ws://127.0.0.1'
+	private _mockConnect = true
+	private _emittedConnected = false
+	private _hasEmittedConnected = false
+	private _failConnectEmitTimeout = 3000
+	private _replyFunction?: (msg: string) => Promise<string> | string
 
 	private _readyState: number = this.CLOSED
 
-	constructor (pathName) {
+	constructor(pathName: string) {
 		super()
 		this._pathName = pathName
 
@@ -48,16 +48,16 @@ class WebSocket extends EventEmitter {
 		// this.emit('error', error)
 		// this.emit('close')
 	}
-	public static getMockInstances () {
+	public static getMockInstances() {
 		return instances
 	}
-	public static clearMockInstances () {
+	public static clearMockInstances() {
 		return instances.splice(0, 9999)
 	}
-	public static mockConstructor (fcn: (WebSocket) => void) {
+	public static mockConstructor(fcn: (WebSocket: WebSocket) => void) {
 		mockConstructor = fcn
 	}
-	public send (message, callback: (err?: Error) => void) {
+	public send(message: string, callback: (err?: Error) => void) {
 		if (!this._emittedConnected) {
 			callback(new Error('Error, not connected'))
 		} else {
@@ -65,49 +65,45 @@ class WebSocket extends EventEmitter {
 				callback()
 
 				Promise.resolve(this._replyFunction(message))
-				.then((reply) => {
-					if (reply) {
-						if (typeof reply !== 'string') reply = JSON.stringify(reply)
-						this.emit('message', reply)
-					}
-				})
-				.catch((err) => {
-					console.log('err')
-					this.emit('error', err)
-				})
+					.then((reply) => {
+						if (reply) {
+							if (typeof reply !== 'string') reply = JSON.stringify(reply)
+							this.emit('message', reply)
+						}
+					})
+					.catch((err) => {
+						console.log('err')
+						this.emit('error', err)
+					})
 			} else {
 				throw new Error('mock ws._replyFunction not set')
 			}
 		}
 	}
-	public get readyState () {
+	public get readyState() {
 		return this._readyState
 	}
-	public mockReplyFunction (fcn: (msg: string) => Promise<string> | string) {
+	public mockReplyFunction(fcn: (msg: string) => Promise<string> | string) {
 		this._replyFunction = fcn
 	}
-	public mockSetConnected (connected) {
+	public mockSetConnected(connected: boolean) {
 		this._mockConnect = connected
 
 		this._updateConnectionStatus()
 	}
-	public mockSendMessage (message: string | object) {
+	public mockSendMessage(message: string | Record<string, unknown>) {
 		if (typeof message !== 'string') message = JSON.stringify(message)
 		this.emit('message', message)
 	}
-	public close () {
+	public close() {
 		this._readyState = this.CLOSING
 
 		orgSetTimeout(() => {
 			this.mockSetConnected(false)
 		}, 1)
 	}
-	private _updateConnectionStatus () {
-
-		let connected: boolean = !!(
-			this._pathName.match(this._mockHost) &&
-			this._mockConnect
-		)
+	private _updateConnectionStatus() {
+		const connected = !!(this._pathName.match(this._mockHost) && this._mockConnect)
 
 		if (connected !== this._emittedConnected || !this._hasEmittedConnected) {
 			this._emittedConnected = connected
@@ -124,7 +120,6 @@ class WebSocket extends EventEmitter {
 		return connected
 	}
 }
-namespace WebSocket {
-
-}
+/* eslint-disable */
+namespace WebSocket {}
 export = WebSocket

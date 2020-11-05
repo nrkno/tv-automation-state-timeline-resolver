@@ -2,7 +2,7 @@ import { MockTime } from './mockTime'
 
 describe('mockTime', () => {
 	test('mockTime sync', () => {
-		let mockTime = new MockTime()
+		const mockTime = new MockTime()
 		mockTime.init()
 		expect(mockTime.now).toEqual(10000)
 		expect(mockTime.now).toEqual(10000)
@@ -15,8 +15,8 @@ describe('mockTime', () => {
 			mockTime.advanceTimeTo(11000)
 		}).toThrowError()
 	})
-	test('mockTimeAsync', async done => {
-		let mockTime = new MockTime()
+	test('mockTimeAsync', async (done) => {
+		const mockTime = new MockTime()
 		mockTime.init()
 		expect(mockTime.now).toEqual(10000)
 		expect(mockTime.now).toEqual(10000)

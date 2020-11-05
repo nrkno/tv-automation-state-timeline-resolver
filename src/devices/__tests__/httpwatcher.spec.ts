@@ -1,34 +1,29 @@
 import { Conductor } from '../../conductor'
-import {
-	Mappings,
-	DeviceType,
-	MappingHTTPWatcher
-} from '../../types/src'
+import { Mappings, DeviceType, MappingHTTPWatcher } from '../../types/src'
 import { MockTime } from '../../__tests__/mockTime'
 import { StatusCode } from '../device'
 
-const request = require('../../__mocks__/request')
+import * as request from '../../__mocks__/request'
 
-let myLayerMapping0: MappingHTTPWatcher = {
+const myLayerMapping0: MappingHTTPWatcher = {
 	device: DeviceType.HTTPWATCHER,
-	deviceId: 'myHTTPWatch'
+	deviceId: 'myHTTPWatch',
 }
-let myLayerMapping: Mappings = {
-	'myLayer0': myLayerMapping0
+const myLayerMapping: Mappings = {
+	myLayer0: myLayerMapping0,
 }
 
 describe('HTTP-Watcher', () => {
-
 	jest.mock('request', () => request)
 
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 
 	let onGet: jest.Mock<void, any[]>
 	let mockStatusCode: number
 	let mockBody: string
 	let myConductor: Conductor = new Conductor({
 		initializeAsClear: true,
-		getCurrentTime: mockTime.getCurrentTime
+		getCurrentTime: mockTime.getCurrentTime,
 	})
 	beforeAll(() => {
 		Date.now = jest.fn(() => {
@@ -36,10 +31,14 @@ describe('HTTP-Watcher', () => {
 		})
 		onGet = jest.fn((url, _options, callback) => {
 			if (url === 'http://localhost') {
-				callback(null, {
-					statusCode: mockStatusCode,
-					body: mockBody
-				}, mockBody)
+				callback(
+					null,
+					{
+						statusCode: mockStatusCode,
+						body: mockBody,
+					},
+					mockBody
+				)
 			} else {
 				callback(new Error('Unsupported mock url: ' + url), null)
 			}
@@ -54,7 +53,7 @@ describe('HTTP-Watcher', () => {
 		request.setMockGet(onGet)
 		myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 	})
 
@@ -63,15 +62,19 @@ describe('HTTP-Watcher', () => {
 	})
 
 	test('Good reply, turns bad, then good again', async () => {
-		let onError = jest.fn()
+		const onError = jest.fn()
 		myConductor.on('error', onError)
 
-		let onGetLocal = jest.fn((url, _options, callback) => {
+		const onGetLocal = jest.fn((url, _options, callback) => {
 			if (url === 'http://localhost:1234') {
-				callback(null, {
-					statusCode: mockStatusCode,
-					body: mockBody
-				}, mockBody)
+				callback(
+					null,
+					{
+						statusCode: mockStatusCode,
+						body: mockBody,
+					},
+					mockBody
+				)
 			} else {
 				callback(new Error('Unsupported mock'), null)
 			}
@@ -86,8 +89,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 
@@ -103,7 +106,11 @@ describe('HTTP-Watcher', () => {
 
 		mockStatusCode = 500
 		await mockTime.advanceTimeTicks(10100)
-		expect(await generatedDevice.getStatus()).toMatchObject({ statusCode: StatusCode.BAD, messages: [/status code/i], active: true })
+		expect(await generatedDevice.getStatus()).toMatchObject({
+			statusCode: StatusCode.BAD,
+			messages: [/status code/i],
+			active: true,
+		})
 
 		mockStatusCode = 200
 		await mockTime.advanceTimeTicks(10100)
@@ -111,7 +118,11 @@ describe('HTTP-Watcher', () => {
 
 		mockBody = 'sorry not sorry'
 		await mockTime.advanceTimeTicks(10100)
-		expect(await generatedDevice.getStatus()).toMatchObject({ statusCode: StatusCode.BAD, messages: [/keyword/i], active: true })
+		expect(await generatedDevice.getStatus()).toMatchObject({
+			statusCode: StatusCode.BAD,
+			messages: [/keyword/i],
+			active: true,
+		})
 
 		mockBody = 'heres my keyword again'
 		await mockTime.advanceTimeTicks(10100)
@@ -122,7 +133,7 @@ describe('HTTP-Watcher', () => {
 		expect(onError).toHaveBeenCalledTimes(0)
 	})
 	test('Only check keyword', async () => {
-		let onError = jest.fn()
+		const onError = jest.fn()
 		myConductor.on('error', onError)
 
 		await myConductor.init()
@@ -133,8 +144,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				// expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 
@@ -160,7 +171,11 @@ describe('HTTP-Watcher', () => {
 		mockBody = 'sorry not sorry'
 		await mockTime.advanceTimeTicks(10100)
 		expect(onGet).toBeCalledTimes(4)
-		expect(await generatedDevice.getStatus()).toMatchObject({ statusCode: StatusCode.BAD, messages: [/keyword/i], active: true })
+		expect(await generatedDevice.getStatus()).toMatchObject({
+			statusCode: StatusCode.BAD,
+			messages: [/keyword/i],
+			active: true,
+		})
 
 		mockBody = 'heres my keyword again'
 		await mockTime.advanceTimeTicks(10100)
@@ -172,7 +187,7 @@ describe('HTTP-Watcher', () => {
 		expect(onError).toHaveBeenCalledTimes(0)
 	})
 	test('Only check response code', async () => {
-		let onError = jest.fn()
+		const onError = jest.fn()
 		myConductor.on('error', onError)
 
 		await myConductor.init()
@@ -183,8 +198,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				// keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 
@@ -200,7 +215,11 @@ describe('HTTP-Watcher', () => {
 		mockStatusCode = 500
 		await mockTime.advanceTimeTicks(10100)
 		expect(onGet).toBeCalledTimes(2)
-		expect(await generatedDevice.getStatus()).toMatchObject({ statusCode: StatusCode.BAD, messages: [/status code/i], active: true })
+		expect(await generatedDevice.getStatus()).toMatchObject({
+			statusCode: StatusCode.BAD,
+			messages: [/status code/i],
+			active: true,
+		})
 
 		mockStatusCode = 200
 		await mockTime.advanceTimeTicks(10100)
@@ -231,8 +250,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })
@@ -244,7 +263,7 @@ describe('HTTP-Watcher', () => {
 		await generatedDevice.terminate()
 	})
 	test('Un-Successful get returns BAD state', async () => {
-		let onGetLocal = jest.fn((_url, _options, callback) => {
+		const onGetLocal = jest.fn((_url, _options, callback) => {
 			callback(new Error('Bad Gateway'), null)
 		})
 		request.setMockGet(onGetLocal)
@@ -257,8 +276,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })
@@ -266,7 +285,11 @@ describe('HTTP-Watcher', () => {
 
 		await mockTime.advanceTimeTicks(10100)
 		expect(onGetLocal).toBeCalledTimes(1)
-		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.BAD, messages: ['Error: Bad Gateway'], active: true })
+		expect(await generatedDevice.getStatus()).toEqual({
+			statusCode: StatusCode.BAD,
+			messages: ['Error: Bad Gateway'],
+			active: true,
+		})
 
 		await generatedDevice.terminate()
 	})
@@ -280,8 +303,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				keyword: 'bad keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })
@@ -289,18 +312,26 @@ describe('HTTP-Watcher', () => {
 
 		await mockTime.advanceTimeTicks(10100)
 		expect(onGet).toBeCalledTimes(1)
-		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.BAD, messages: ['Expected keyword \"bad keyword\" not found'], active: true })
+		expect(await generatedDevice.getStatus()).toEqual({
+			statusCode: StatusCode.BAD,
+			messages: ['Expected keyword "bad keyword" not found'],
+			active: true,
+		})
 
 		await generatedDevice.terminate()
 	})
 
 	test('Un-Successful get, wrong status code, returns BAD state', async () => {
-		let onGetLocal = jest.fn((url, _options, callback) => {
+		const onGetLocal = jest.fn((url, _options, callback) => {
 			if (url === 'http://localhost:1234') {
-				callback(null, {
-					statusCode: 201,
-					body: 'my keyword'
-				}, 'my keyword')
+				callback(
+					null,
+					{
+						statusCode: 201,
+						body: 'my keyword',
+					},
+					'my keyword'
+				)
 			} else {
 				callback(new Error('Unsupported mock'), null)
 			}
@@ -315,8 +346,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'get',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })
@@ -324,17 +355,25 @@ describe('HTTP-Watcher', () => {
 
 		await mockTime.advanceTimeTicks(10100)
 		expect(onGetLocal).toBeCalledTimes(1)
-		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.BAD, messages: ['Expected status code 200, got 201' ], active: true })
+		expect(await generatedDevice.getStatus()).toEqual({
+			statusCode: StatusCode.BAD,
+			messages: ['Expected status code 200, got 201'],
+			active: true,
+		})
 
 		await generatedDevice.terminate()
 	})
 	test('Successful http POST returns GOOD state', async () => {
-		let onPost = jest.fn((url, _options, callback) => {
+		const onPost = jest.fn((url, _options, callback) => {
 			if (url === 'http://localhost:1234') {
-				callback(null, {
-					statusCode: 200,
-					body: 'my keyword2'
-				}, 'my keyword2')
+				callback(
+					null,
+					{
+						statusCode: 200,
+						body: 'my keyword2',
+					},
+					'my keyword2'
+				)
 			} else {
 				callback(new Error('Unsupported mock'), null)
 			}
@@ -349,8 +388,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'post',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword2',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })
@@ -372,8 +411,8 @@ describe('HTTP-Watcher', () => {
 				httpMethod: 'jibberish',
 				expectedHttpResponse: 200,
 				keyword: 'my keyword',
-				interval: 10 * 1000
-			}
+				interval: 10 * 1000,
+			},
 		})
 		const generatedDevice = generatedDeviceContainer.device
 		expect(await generatedDevice.getStatus()).toEqual({ statusCode: StatusCode.UNKNOWN, active: true })

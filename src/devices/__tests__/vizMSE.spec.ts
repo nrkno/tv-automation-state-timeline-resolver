@@ -1,9 +1,5 @@
 import { Conductor } from '../../conductor'
-import {
-	Mappings,
-	DeviceType,
-	TSRTimeline
-} from '../../types/src'
+import { Mappings, DeviceType, TSRTimeline } from '../../types/src'
 import { MockTime } from '../../__tests__/mockTime'
 import { ThreadedClass } from 'threadedclass'
 import { MappingVizMSE, TimelineContentTypeVizMSE, VIZMSETransitionType } from '../../types/src/vizMSE'
@@ -17,7 +13,7 @@ import _ = require('underscore')
 import { StatusCode } from '../device'
 
 describe('vizMSE', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 
 	jest.mock('v-connection', () => vConnection)
 
@@ -30,27 +26,26 @@ describe('vizMSE', () => {
 		mockTime.init()
 	})
 	test('vizMSE: Internal element', async () => {
-
 		const commandReceiver0 = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingVizMSE = {
+		const myChannelMapping0: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping1: MappingVizMSE = {
+		const myChannelMapping1: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping: Mappings = {
-			'viz0': myChannelMapping0,
-			'viz_continue': myChannelMapping1
+		const myChannelMapping: Mappings = {
+			viz0: myChannelMapping0,
+			viz_continue: myChannelMapping1,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			multiThreadedResolver: false,
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init()
@@ -63,13 +58,13 @@ describe('vizMSE', () => {
 				preloadAllElements: true,
 				playlistID: 'my-super-playlist-id',
 				showID: 'show1234',
-				profile: 'profile9999'
-			}
+				profile: 'profile9999',
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myViz')
-		let device = deviceContainer.device as ThreadedClass<VizMSEDevice>
+		const deviceContainer = myConductor.getDevice('myViz')
+		const device = deviceContainer.device as ThreadedClass<VizMSEDevice>
 		await device.ignoreWaitsInTests()
 
 		// Check that no commands has been scheduled:
@@ -80,7 +75,7 @@ describe('vizMSE', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now + 5000, // 15100
-					duration: 5000 // 20100
+					duration: 5000, // 20100
 				},
 				layer: 'viz0',
 				content: {
@@ -91,38 +86,36 @@ describe('vizMSE', () => {
 					// cue?: boolean
 					// noAutoPreloading?: boolean
 					templateName: 'myInternalElement',
-					templateData: ['line1', 'line2']
-
-				}
+					templateData: ['line1', 'line2'],
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 7000, // 17100
-					duration: 5000 // 22100
+					duration: 5000, // 22100
 				},
 				layer: 'viz0',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.ELEMENT_INTERNAL,
 					templateName: 'myInternalElement2',
-					templateData: ['line1']
-
-				}
+					templateData: ['line1'],
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 9000, // 19100
-					duration: 500
+					duration: 500,
 				},
 				layer: 'viz_continue',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.CONTINUE,
-					reference: 'viz0'
-				}
-			}
+					reference: 'viz0',
+				},
+			},
 		])
 
 		await mockTime.advanceTimeTicks(500) // 10500
@@ -139,7 +132,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'prepare',
 			templateName: 'myInternalElement',
-			templateData: ['line1', 'line2']
+			templateData: ['line1', 'line2'],
 			// channelName?: string
 			// noAutoPreloading?: boolean
 		})
@@ -153,7 +146,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'take',
 			templateName: 'myInternalElement',
-			templateData: ['line1', 'line2']
+			templateData: ['line1', 'line2'],
 		})
 
 		commandReceiver0.mockClear()
@@ -165,7 +158,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement2'),
 			type: 'prepare',
 			templateName: 'myInternalElement2',
-			templateData: ['line1']
+			templateData: ['line1'],
 		})
 
 		commandReceiver0.mockClear()
@@ -177,7 +170,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement2'),
 			type: 'take',
 			templateName: 'myInternalElement2',
-			templateData: ['line1']
+			templateData: ['line1'],
 		})
 
 		commandReceiver0.mockClear()
@@ -189,7 +182,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement2'),
 			type: 'continue',
 			templateName: 'myInternalElement2',
-			templateData: ['line1']
+			templateData: ['line1'],
 		})
 
 		commandReceiver0.mockClear()
@@ -201,32 +194,31 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement2'),
 			type: 'out',
 			templateName: 'myInternalElement2',
-			templateData: ['line1']
+			templateData: ['line1'],
 		})
-
 	})
 	test('vizMSE: External/Pilot element', async () => {
-		let device: any
+		let device: any = undefined
 		const commandReceiver0 = jest.fn((...args) => {
 			return device._defaultCommandReceiver(...args)
 		})
 
-		let myChannelMapping0: MappingVizMSE = {
+		const myChannelMapping0: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping1: MappingVizMSE = {
+		const myChannelMapping1: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping: Mappings = {
-			'viz0': myChannelMapping0,
-			'viz_continue': myChannelMapping1
+		const myChannelMapping: Mappings = {
+			viz0: myChannelMapping0,
+			viz_continue: myChannelMapping1,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		const onError = jest.fn()
 		myConductor.on('error', onError)
@@ -241,12 +233,12 @@ describe('vizMSE', () => {
 				preloadAllElements: true,
 				playlistID: 'my-super-playlist-id',
 				showID: 'show1234',
-				profile: 'profile9999'
-			}
+				profile: 'profile9999',
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myViz')
+		const deviceContainer = myConductor.getDevice('myViz')
 		device = deviceContainer.device as ThreadedClass<VizMSEDevice>
 		await device.ignoreWaitsInTests()
 		// Check that no commands has been scheduled:
@@ -257,7 +249,7 @@ describe('vizMSE', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now + 5000, // 15100
-					duration: 5000 // 20100
+					duration: 5000, // 20100
 				},
 				layer: 'viz0',
 				content: {
@@ -267,38 +259,36 @@ describe('vizMSE', () => {
 					// cue?: boolean
 					// noAutoPreloading?: boolean
 					channelName: 'FULL1',
-					templateVcpId: 1337
-
-				}
+					templateVcpId: 1337,
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 7000, // 17100
-					duration: 5000 // 22100
+					duration: 5000, // 22100
 				},
 				layer: 'viz0',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.ELEMENT_PILOT,
 					channelName: 'FULL1',
-					templateVcpId: 1338
-
-				}
+					templateVcpId: 1338,
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 9000, // 19100
-					duration: 500
+					duration: 500,
 				},
 				layer: 'viz_continue',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.CONTINUE,
-					reference: 'viz0'
-				}
-			}
+					reference: 'viz0',
+				},
+			},
 		])
 
 		await mockTime.advanceTimeTicks(500) // 10500
@@ -315,15 +305,15 @@ describe('vizMSE', () => {
 			{
 				templateName: 1337,
 				// templateData?: string[]
-				channelName: 'FULL1'
+				channelName: 'FULL1',
 				// noAutoPreloading?: boolean
 			},
 			{
 				templateName: 1336,
 				// templateData?: string[]
-				channelName: 'FULL1'
+				channelName: 'FULL1',
 				// noAutoPreloading?: boolean
-			}
+			},
 		])
 		await mockTime.advanceTimeTicks(100)
 
@@ -359,7 +349,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1337'),
 			type: 'prepare',
 			templateName: 1337,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 			// noAutoPreloading?: boolean
 		})
 
@@ -372,7 +362,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1337'),
 			type: 'take',
 			templateName: 1337,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		commandReceiver0.mockClear()
@@ -384,7 +374,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1338'),
 			type: 'prepare',
 			templateName: 1338,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		commandReceiver0.mockClear()
@@ -396,7 +386,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1338'),
 			type: 'take',
 			templateName: 1338,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		commandReceiver0.mockClear()
@@ -408,7 +398,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1338'),
 			type: 'continue',
 			templateName: 1338,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		commandReceiver0.mockClear()
@@ -420,7 +410,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('pilot_1338'),
 			type: 'out',
 			templateName: 1338,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		// manually load elements:
@@ -432,16 +422,16 @@ describe('vizMSE', () => {
 		await device.handleExpectedPlayoutItems([
 			{
 				templateName: 1337,
-				channelName: 'FULL1'
+				channelName: 'FULL1',
 			},
 			{
 				templateName: 1336,
-				channelName: 'FULL1'
+				channelName: 'FULL1',
 			},
 			{
 				templateName: 9999,
-				channelName: 'FULL1'
-			}
+				channelName: 'FULL1',
+			},
 		])
 
 		myConductor.setTimelineAndMappings([
@@ -449,14 +439,14 @@ describe('vizMSE', () => {
 				id: 'loadAll',
 				enable: {
 					start: 25000,
-					duration: 500 // 25500
+					duration: 500, // 25500
 				},
 				layer: 'viz0',
 				content: {
 					deviceType: DeviceType.VIZMSE,
-					type: TimelineContentTypeVizMSE.LOAD_ALL_ELEMENTS
-				}
-			}
+					type: TimelineContentTypeVizMSE.LOAD_ALL_ELEMENTS,
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(24900)
@@ -474,7 +464,7 @@ describe('vizMSE', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			timelineObjId: 'loadAll',
 			time: 25000,
-			type: 'load_all_elements'
+			type: 'load_all_elements',
 		})
 
 		expect(rundown.initialize).toHaveBeenCalledTimes(1)
@@ -485,13 +475,11 @@ describe('vizMSE', () => {
 		expect(rundown.deactivate).toHaveBeenCalledTimes(1)
 
 		expect(onError).toHaveBeenCalledTimes(0)
-
 	})
 	test('vizMSE: bad init options & basic functionality', async () => {
-
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		const onError = jest.fn()
 		myConductor.on('error', onError)
@@ -501,36 +489,37 @@ describe('vizMSE', () => {
 		await myConductor.init()
 
 		await expect(
-			// @ts-ignore
 			myConductor.addDevice('myViz', {
 				type: DeviceType.VIZMSE,
 				options: {
 					// host: '127.0.0.1',
+					// @ts-expect-error: testing bad option
 					showID: 'show1234',
-					profile: 'myProfile'
-				}
+					// @ts-expect-error: testing bad option
+					profile: 'myProfile',
+				},
 			})
 		).rejects.toMatch(/bad option/)
 		await expect(
-			// @ts-ignore
+			// @ts-expect-error: testing bad option
 			myConductor.addDevice('myViz', {
 				type: DeviceType.VIZMSE,
 				options: {
 					host: '127.0.0.1',
 					// showID: 'show1234',
-					profile: 'myProfile'
-				}
+					profile: 'myProfile',
+				},
 			})
 		).rejects.toMatch(/bad option/)
 		await expect(
-			// @ts-ignore
+			// @ts-expect-error: testing bad option
 			myConductor.addDevice('myViz', {
 				type: DeviceType.VIZMSE,
 				options: {
 					host: '127.0.0.1',
-					showID: 'show1234'
+					showID: 'show1234',
 					// profile: 'myProfile'
-				}
+				},
 			})
 		).rejects.toMatch(/bad option/)
 
@@ -542,8 +531,8 @@ describe('vizMSE', () => {
 			options: {
 				host: '127.0.0.1',
 				showID: 'show1234',
-				profile: 'myProfile'
-			}
+				profile: 'myProfile',
+			},
 		})
 		const device = deviceContainer.device
 		const connectionChanged = jest.fn()
@@ -555,7 +544,7 @@ describe('vizMSE', () => {
 
 		expect(connectionChanged).toHaveBeenCalledTimes(0)
 		expect(await device.getStatus()).toMatchObject({
-			statusCode: StatusCode.GOOD
+			statusCode: StatusCode.GOOD,
 		})
 		connectionChanged.mockClear()
 
@@ -564,7 +553,7 @@ describe('vizMSE', () => {
 		await mockTime.advanceTimeTicks(100)
 		expect(connectionChanged).toHaveBeenCalledTimes(1)
 		expect(await device.getStatus()).toMatchObject({
-			statusCode: StatusCode.BAD
+			statusCode: StatusCode.BAD,
 		})
 		connectionChanged.mockClear()
 
@@ -573,7 +562,7 @@ describe('vizMSE', () => {
 		await mockTime.advanceTimeTicks(100)
 		expect(connectionChanged).toHaveBeenCalledTimes(1)
 		expect(await device.getStatus()).toMatchObject({
-			statusCode: StatusCode.GOOD
+			statusCode: StatusCode.GOOD,
 		})
 
 		expect(await device.terminate()).toEqual(true)
@@ -582,29 +571,27 @@ describe('vizMSE', () => {
 
 		expect(onError).toHaveBeenCalledTimes(0)
 		expect(onWarning).toHaveBeenCalledTimes(0)
-
 	})
 	test('vizMSE: clear all elements', async () => {
-
 		const commandReceiver0 = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingVizMSE = {
+		const myChannelMapping0: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping1: MappingVizMSE = {
+		const myChannelMapping1: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping: Mappings = {
-			'viz0': myChannelMapping0,
-			'viz_continue': myChannelMapping1
+		const myChannelMapping: Mappings = {
+			viz0: myChannelMapping0,
+			viz_continue: myChannelMapping1,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init()
@@ -618,13 +605,13 @@ describe('vizMSE', () => {
 				showID: 'show1234',
 				profile: 'profile9999',
 				clearAllTemplateName: 'clear_all_of_them',
-				clearAllCommands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT ']
-			}
+				clearAllCommands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT '],
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myViz')
-		let device = deviceContainer.device as ThreadedClass<VizMSEDevice>
+		const deviceContainer = myConductor.getDevice('myViz')
+		const device = deviceContainer.device as ThreadedClass<VizMSEDevice>
 		await device.ignoreWaitsInTests()
 
 		// Check that no commands has been scheduled:
@@ -635,30 +622,30 @@ describe('vizMSE', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now, // 10100
-					duration: 10 * 1000 // 20100
+					duration: 10 * 1000, // 20100
 				},
 				layer: 'viz0',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.ELEMENT_INTERNAL,
 					templateName: 'myInternalElement',
-					templateData: []
-				}
+					templateData: [],
+				},
 			},
 			{
 				id: 'clearAll',
 				enable: {
 					start: mockTime.now + 5000, // 15100
-					duration: 1000 // 16100
+					duration: 1000, // 16100
 				},
 				layer: 'viz0',
 				content: {
 					deviceType: DeviceType.VIZMSE,
 					type: TimelineContentTypeVizMSE.CLEAR_ALL_ELEMENTS,
 					channelsToSendCommands: ['OVL', 'FULL'],
-					commands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT ']
-				}
-			}
+					commands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT '],
+				},
+			},
 		] as TSRTimeline)
 
 		// await mockTime.advanceTimeTicks(500) // 10500
@@ -687,7 +674,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'prepare',
 			templateName: 'myInternalElement',
-			templateData: []
+			templateData: [],
 		})
 		expect(getMockCall(commandReceiver0, 1, 1)).toMatchObject({
 			timelineObjId: 'obj0',
@@ -695,7 +682,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'take',
 			templateName: 'myInternalElement',
-			templateData: []
+			templateData: [],
 		})
 
 		commandReceiver0.mockClear()
@@ -705,14 +692,14 @@ describe('vizMSE', () => {
 			timelineObjId: 'clearAll',
 			time: 15100,
 			type: 'clear_all_elements',
-			templateName: 'clear_all_of_them'
+			templateName: 'clear_all_of_them',
 		})
 		expect(getMockCall(commandReceiver0, 1, 1)).toMatchObject({
 			timelineObjId: 'clearAll',
 			time: 15100,
 			type: 'clear_all_engines',
 			channels: ['OVL', 'FULL'],
-			commands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT ']
+			commands: ['RENDERER*FRONT_LAYER SET_OBJECT ', 'RENDERER SET_OBJECT '],
 		})
 		expect(getMockCall(commandReceiver0, 2, 1)).toMatchObject({
 			timelineObjId: 'obj0',
@@ -720,7 +707,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'prepare',
 			templateName: 'myInternalElement',
-			templateData: []
+			templateData: [],
 		})
 
 		commandReceiver0.mockClear()
@@ -732,7 +719,7 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'take',
 			templateName: 'myInternalElement',
-			templateData: []
+			templateData: [],
 		})
 
 		commandReceiver0.mockClear()
@@ -744,32 +731,31 @@ describe('vizMSE', () => {
 			templateInstance: expect.stringContaining('myInternalElement'),
 			type: 'out',
 			templateName: 'myInternalElement',
-			templateData: []
+			templateData: [],
 		})
-
 	})
 	test('vizMSE: Delayed External/Pilot element', async () => {
-		let device: any
+		let device: any = undefined
 		const commandReceiver0 = jest.fn((...args) => {
 			return device._defaultCommandReceiver(...args)
 		})
 
-		let myChannelMapping0: MappingVizMSE = {
+		const myChannelMapping0: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping1: MappingVizMSE = {
+		const myChannelMapping1: MappingVizMSE = {
 			device: DeviceType.VIZMSE,
-			deviceId: 'myViz'
+			deviceId: 'myViz',
 		}
-		let myChannelMapping: Mappings = {
-			'viz0': myChannelMapping0,
-			'viz_continue': myChannelMapping1
+		const myChannelMapping: Mappings = {
+			viz0: myChannelMapping0,
+			viz_continue: myChannelMapping1,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		const onError = jest.fn()
 		myConductor.on('error', onError)
@@ -784,12 +770,12 @@ describe('vizMSE', () => {
 				preloadAllElements: true,
 				playlistID: 'my-super-playlist-id',
 				showID: 'show1234',
-				profile: 'profile9999'
-			}
+				profile: 'profile9999',
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('myViz')
+		const deviceContainer = myConductor.getDevice('myViz')
 		device = deviceContainer.device as ThreadedClass<VizMSEDevice>
 		await device.ignoreWaitsInTests()
 
@@ -807,7 +793,7 @@ describe('vizMSE', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now + 5000, // 15100
-					duration: 5000 // 20100
+					duration: 5000, // 20100
 				},
 				layer: 'viz0',
 				content: {
@@ -817,11 +803,10 @@ describe('vizMSE', () => {
 					templateVcpId: 1337,
 					outTransition: {
 						type: VIZMSETransitionType.DELAY,
-						delay: 1000
-					}
-
-				}
-			}
+						delay: 1000,
+					},
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(14000)
@@ -835,7 +820,7 @@ describe('vizMSE', () => {
 			time: 14100,
 			type: 'prepare',
 			templateName: 1337,
-			channelName: 'FULL1'
+			channelName: 'FULL1',
 		})
 
 		commandReceiver0.mockClear()
@@ -859,6 +844,5 @@ describe('vizMSE', () => {
 		expect(rundown.take).toHaveBeenCalledTimes(0)
 
 		expect(onError).toHaveBeenCalledTimes(0)
-
 	})
 })

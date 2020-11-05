@@ -1,8 +1,4 @@
-import {
-	Mappings,
-	DeviceType,
-	MappingTCPSend
-} from '../../types/src'
+import { Mappings, DeviceType, MappingTCPSend } from '../../types/src'
 import { Conductor } from '../../conductor'
 import { Socket as MockSocket } from 'net'
 import { StatusCode } from '../device'
@@ -11,9 +7,9 @@ import { MockTime } from '../../__tests__/mockTime'
 import { TCPSendDevice } from '../tcpSend'
 
 jest.mock('net')
-let setTimeoutOrg = setTimeout
+const setTimeoutOrg = setTimeout
 
-function waitALittleBit () {
+function waitALittleBit() {
 	return new Promise((resolve) => {
 		setTimeoutOrg(resolve, 10)
 	})
@@ -21,7 +17,7 @@ function waitALittleBit () {
 
 // let nowActual = Date.now()
 describe('TCP-Send', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 	beforeAll(() => {
 		mockTime.mockDateNow()
 	})
@@ -30,21 +26,18 @@ describe('TCP-Send', () => {
 	})
 	// afterEach(() => {})
 	test('Send message', async () => {
-
-		const commandReceiver0: any = jest.fn((time, cmd, context) => {
+		const commandReceiver0: any = jest.fn((time, cmd, context, tlObjId) => {
 			// return Promise.resolve()
-			// @ts-ignore
-			device._defaultCommandReceiver(time, cmd, context)
+			;((device as unknown) as TCPSendDevice)['_defaultCommandReceiver'](time, cmd, context, tlObjId)
 		})
 
-		let onSocketCreate = jest.fn()
-		let onConnection = jest.fn()
-		let onSocketClose = jest.fn()
-		let onSocketWrite = jest.fn()
-		let onConnectionChanged = jest.fn()
+		const onSocketCreate = jest.fn()
+		const onConnection = jest.fn()
+		const onSocketClose = jest.fn()
+		const onSocketWrite = jest.fn()
+		const onConnectionChanged = jest.fn()
 
-		// @ts-ignore MockSocket
-		MockSocket.mockOnNextSocket((socket: any) => {
+		;(MockSocket as any).mockOnNextSocket((socket: any) => {
 			onSocketCreate(onSocketCreate)
 
 			socket.onConnect = onConnection
@@ -52,19 +45,19 @@ describe('TCP-Send', () => {
 			socket.onClose = onSocketClose
 		})
 
-		let myLayerMapping0: MappingTCPSend = {
+		const myLayerMapping0: MappingTCPSend = {
 			device: DeviceType.TCPSEND,
-			deviceId: 'myTCP'
+			deviceId: 'myTCP',
 		}
-		let myLayerMapping: Mappings = {
-			'myLayer0': myLayerMapping0
+		const myLayerMapping: Mappings = {
+			myLayer0: myLayerMapping0,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: () => mockTime.now
+			getCurrentTime: () => mockTime.now,
 		})
-		let onError = jest.fn(console.log)
+		const onError = jest.fn(console.log)
 		myConductor.on('error', onError)
 		await myConductor.init()
 
@@ -75,29 +68,31 @@ describe('TCP-Send', () => {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.1',
 				port: 1234,
-				makeReadyCommands: [{
-					message: 'makeReady0'
-				},{
-					message: 'makeReady1'
-				}]
+				makeReadyCommands: [
+					{
+						message: 'makeReady0',
+					},
+					{
+						message: 'makeReady1',
+					},
+				],
 				// bufferEncoding: 'hex',
-			}
+			},
 		})
 
 		expect(onSocketCreate).toHaveBeenCalledTimes(1)
 
-		// @ts-ignore
-		let sockets = MockSocket.mockSockets()
+		const sockets = (MockSocket as any).mockSockets()
 		expect(sockets).toHaveLength(1)
-		let socket = sockets[0]
+		const socket = sockets[0]
 
 		myConductor.setTimelineAndMappings([], myLayerMapping)
 		await mockTime.advanceTimeToTicks(10100) // 10100
 		expect(mockTime.now).toEqual(10100)
 		expect(onConnection).toHaveBeenCalledTimes(1)
 
-		let deviceContainer = myConductor.getDevice('myTCP')
-		let device = deviceContainer.device as ThreadedClass<TCPSendDevice>
+		const deviceContainer = myConductor.getDevice('myTCP')
+		const device = deviceContainer.device as ThreadedClass<TCPSendDevice>
 
 		await device.on('connectionChanged', onConnectionChanged)
 
@@ -113,14 +108,14 @@ describe('TCP-Send', () => {
 				id: 'obj0',
 				enable: {
 					start: 11000,
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'myLayer0',
 				content: {
 					deviceType: DeviceType.TCPSEND,
-					message: 'hello world'
-				}
-			}
+					message: 'hello world',
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(10990)
@@ -130,7 +125,7 @@ describe('TCP-Send', () => {
 
 		expect(commandReceiver0).toHaveBeenCalledTimes(1)
 		expect(commandReceiver0.mock.calls[0][1]).toMatchObject({
-			message: 'hello world'
+			message: 'hello world',
 		})
 		expect(commandReceiver0.mock.calls[0][2]).toMatch(/added: obj0/)
 		await waitALittleBit()
@@ -143,20 +138,20 @@ describe('TCP-Send', () => {
 				id: 'obj0',
 				enable: {
 					start: 11000,
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'myLayer0',
 				content: {
 					deviceType: DeviceType.TCPSEND,
-					message: 'anyone here'
-				}
-			}
+					message: 'anyone here',
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(12000) // 12000
 		expect(commandReceiver0).toHaveBeenCalledTimes(2)
 		expect(commandReceiver0.mock.calls[1][1]).toMatchObject({
-			message: 'anyone here'
+			message: 'anyone here',
 		})
 		expect(commandReceiver0.mock.calls[1][2]).toMatch(/changed: obj0/)
 		await waitALittleBit() // allow for async socket events to fire
@@ -169,13 +164,12 @@ describe('TCP-Send', () => {
 		expect(onSocketWrite).toHaveBeenCalledTimes(2)
 
 		// test disconnected
-		// @ts-ignore
-		socket.mockClose()
+		;(socket as any).mockClose()
 		expect(onSocketClose).toHaveBeenCalledTimes(1)
 		await waitALittleBit()
 		expect(onConnectionChanged).toHaveBeenCalledTimes(1)
 		expect(onConnectionChanged.mock.calls[0][0]).toMatchObject({
-			statusCode: StatusCode.BAD
+			statusCode: StatusCode.BAD,
 		})
 
 		// test retry
@@ -187,7 +181,7 @@ describe('TCP-Send', () => {
 		await waitALittleBit()
 		expect(onConnectionChanged).toHaveBeenCalledTimes(2)
 		expect(onConnectionChanged.mock.calls[1][0]).toMatchObject({
-			statusCode: StatusCode.GOOD
+			statusCode: StatusCode.GOOD,
 		})
 
 		// Test makeReady:
@@ -197,18 +191,18 @@ describe('TCP-Send', () => {
 
 		expect(onConnectionChanged).toHaveBeenCalledTimes(4)
 		expect(onConnectionChanged.mock.calls[2][0]).toMatchObject({
-			statusCode: StatusCode.BAD
+			statusCode: StatusCode.BAD,
 		})
 		expect(onConnectionChanged.mock.calls[3][0]).toMatchObject({
-			statusCode: StatusCode.GOOD
+			statusCode: StatusCode.GOOD,
 		})
 
 		expect(commandReceiver0).toHaveBeenCalledTimes(4)
 		expect(commandReceiver0.mock.calls[2][1]).toMatchObject({
-			message: 'makeReady0'
+			message: 'makeReady0',
 		})
 		expect(commandReceiver0.mock.calls[3][1]).toMatchObject({
-			message: 'makeReady1'
+			message: 'makeReady1',
 		})
 
 		// dispose
@@ -217,7 +211,7 @@ describe('TCP-Send', () => {
 		expect(onSocketClose).toHaveBeenCalledTimes(2)
 		expect(onConnectionChanged).toHaveBeenCalledTimes(5)
 		expect(onConnectionChanged.mock.calls[4][0]).toMatchObject({
-			statusCode: StatusCode.BAD
+			statusCode: StatusCode.BAD,
 		})
 
 		expect(onError).toHaveBeenCalledTimes(0)

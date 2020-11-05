@@ -1,17 +1,17 @@
-import * as _ from 'underscore'
+import _ from 'underscore'
 import * as Original from 'superfly-timeline'
 import * as Local from '../superfly-timeline'
 
 const LocalEnums = {
-	EventType: Local.EventType
+	EventType: Local.EventType,
 }
 const OriginalEnums = {
-	EventType: Original.EventType
+	EventType: Original.EventType,
 }
 describe('superfly-timeline', () => {
 	test('Enums', () => {
 		_.each(LocalEnums as any, (e: any, enumName: string) => {
-			let originalEnum = OriginalEnums[enumName]
+			const originalEnum = OriginalEnums[enumName]
 
 			expect(e).toBeTruthy()
 			expect(originalEnum).toBeTruthy()
@@ -23,7 +23,7 @@ describe('superfly-timeline', () => {
 	})
 	test('Enumarable types', () => {
 		_.each(Local, (type: any, typeName: string) => {
-			let originalType = Original[typeName]
+			const originalType = Original[typeName]
 			if (_.isFunction(type)) {
 				expect(_.isFunction(originalType)).toBeTruthy()
 			} else {
@@ -32,15 +32,14 @@ describe('superfly-timeline', () => {
 		})
 	})
 	test('Types', () => {
-		function returnType<A> (): A {
+		function returnType<A>(): A {
 			// nothing
-			let a: any
-			return a
+			return
 		}
 		// Note: these checks are not caught by the test, but by the type-check
 
 		// Check that types are the same:
-		let a = [
+		;[
 			// Check that local interfaces matches original
 
 			(): Original.Time => returnType<Local.Time>(),
@@ -71,7 +70,8 @@ describe('superfly-timeline', () => {
 			(): Original.ResolvedStates => returnType<Local.ResolvedStates>(),
 			(): Original.ResolvedTimelineObjectInstance => returnType<Local.ResolvedTimelineObjectInstance>(),
 			(): Original.NextEvent => returnType<Local.NextEvent>(),
-			(): Original.ResolvedTimelineObjectInstanceKeyframe => returnType<Local.ResolvedTimelineObjectInstanceKeyframe>(),
+			(): Original.ResolvedTimelineObjectInstanceKeyframe =>
+				returnType<Local.ResolvedTimelineObjectInstanceKeyframe>(),
 			(): Original.AllStates => returnType<Local.AllStates>(),
 			(): Original.StateInTime => returnType<Local.StateInTime>(),
 			(): Original.TimeEvent => returnType<Local.TimeEvent>(),
@@ -106,13 +106,13 @@ describe('superfly-timeline', () => {
 			(): Local.ResolvedStates => returnType<Original.ResolvedStates>(),
 			(): Local.ResolvedTimelineObjectInstance => returnType<Original.ResolvedTimelineObjectInstance>(),
 			(): Local.NextEvent => returnType<Original.NextEvent>(),
-			(): Local.ResolvedTimelineObjectInstanceKeyframe => returnType<Original.ResolvedTimelineObjectInstanceKeyframe>(),
+			(): Local.ResolvedTimelineObjectInstanceKeyframe =>
+				returnType<Original.ResolvedTimelineObjectInstanceKeyframe>(),
 			(): Local.AllStates => returnType<Original.AllStates>(),
 			(): Local.StateInTime => returnType<Original.StateInTime>(),
 			(): Local.TimeEvent => returnType<Original.TimeEvent>(),
-			(): Local.Resolver => returnType<Original.Resolver>()
+			(): Local.Resolver => returnType<Original.Resolver>(),
 		]
-		a = a
 
 		expect(1).toEqual(1)
 	})

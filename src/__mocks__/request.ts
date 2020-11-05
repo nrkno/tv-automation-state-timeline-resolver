@@ -51,6 +51,6 @@ const request = {
 	},
 	delete: (uri: string, options: any = {}, callback?: Callback) => {
 		_mockDelete(uri, options.json, callback)
-	}
+	},
 }
 export = request

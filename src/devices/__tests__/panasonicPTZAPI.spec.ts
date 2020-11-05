@@ -12,7 +12,7 @@ interface MockDevice {
 	preset: number
 	powerMode: 'p1' | 'p0' | 'p3'
 }
-function mockReply (mockDevice: MockDevice, urlString: string) {
+function mockReply(mockDevice: MockDevice, urlString: string) {
 	const url = new URL(urlString)
 
 	const cmd = url.searchParams.get('cmd') || ''
@@ -25,32 +25,40 @@ function mockReply (mockDevice: MockDevice, urlString: string) {
 	const zoomSpeed = cmd.match(/#Z(\w+)/) // #Z%02i
 	const zoom = cmd.match(/#AXZ(\w+)/) // #AXZ%03X
 
-	if (cmd === '#O') { // POWER_MODE_QUERY
+	if (cmd === '#O') {
+		// POWER_MODE_QUERY
 		return mockDevice.powerMode
-	} else if (preset) { // PRESET_NUMBER_CONTROL_TPL
+	} else if (preset) {
+		// PRESET_NUMBER_CONTROL_TPL
 		mockDevice.preset = Number(preset[1])
 		return 's' + mockDevice.preset
-	} else if (cmd === '#S') { // PRESET_NUMBER_QUERY
+	} else if (cmd === '#S') {
+		// PRESET_NUMBER_QUERY
 		return 's' + mockDevice.preset
-	} else if (speed) { // PRESET_SPEED_CONTROL_TPL
+	} else if (speed) {
+		// PRESET_SPEED_CONTROL_TPL
 		mockDevice.speed = Number(speed[1])
 		return 'uPVS' + mockDevice.speed
-	} else if (cmd === '#UPVS') { // PRESET_SPEED_QUERY
+	} else if (cmd === '#UPVS') {
+		// PRESET_SPEED_QUERY
 		return 'uPVS' + mockDevice.speed
-	} else if (zoomSpeed) { // ZOOM_SPEED_CONTROL_TPL
+	} else if (zoomSpeed) {
+		// ZOOM_SPEED_CONTROL_TPL
 		mockDevice.zoomSpeed = Number(zoomSpeed[1])
 		return 'zS' + mockDevice.zoomSpeed
-	} else if (cmd === '#Z') { // ZOOM_SPEED_QUERY
+	} else if (cmd === '#Z') {
+		// ZOOM_SPEED_QUERY
 		return 'zS' + mockDevice.zoomSpeed
-	} else if (zoom) { // ZOOM_CONTROL_TPL
+	} else if (zoom) {
+		// ZOOM_CONTROL_TPL
 		mockDevice.zoom = Number.parseInt(zoom[1], 16)
 		return 'axz' + mockDevice.zoom.toString(16)
-	} else if (cmd === '#GZ') { // ZOOM_QUERY
+	} else if (cmd === '#GZ') {
+		// ZOOM_QUERY
 		return 'gz' + mockDevice.zoom.toString(16)
 	} else {
 		return 'Mock: Unknown Command ' + cmd
 	}
-
 }
 describe('PanasonicAPI', () => {
 	jest.mock('request', () => request)
@@ -61,23 +69,23 @@ describe('PanasonicAPI', () => {
 		speed: 0,
 		zoomSpeed: 0,
 		zoom: 0,
-		returnError: null
+		returnError: null,
 	}
 
 	// let requestReturnsOK = true
-	function handleRequest (urlString, _options, callback) {
+	function handleRequest(urlString, _options, callback) {
 		orgSetTimeout(() => {
 			callback(null, { body: mockReply(mockDevice, urlString) })
 		}, 1)
 	}
 
-	let onGet = jest.fn(handleRequest)
-	let onPost = jest.fn(handleRequest)
-	let onPut = jest.fn(handleRequest)
-	let onHead = jest.fn(handleRequest)
-	let onPatch = jest.fn(handleRequest)
-	let onDel = jest.fn(handleRequest)
-	let onDelete = jest.fn(handleRequest)
+	const onGet = jest.fn(handleRequest)
+	const onPost = jest.fn(handleRequest)
+	const onPut = jest.fn(handleRequest)
+	const onHead = jest.fn(handleRequest)
+	const onPatch = jest.fn(handleRequest)
+	const onDel = jest.fn(handleRequest)
+	const onDelete = jest.fn(handleRequest)
 
 	request.setMockGet(onGet)
 	request.setMockPost(onPost)
@@ -98,8 +106,8 @@ describe('PanasonicAPI', () => {
 		onDelete.mockClear()
 	})
 	test('Basic methods', async () => {
-		let onError = jest.fn()
-		let onDisconnected = jest.fn()
+		const onError = jest.fn()
+		const onDisconnected = jest.fn()
 
 		const panasonicPTZ = new PanasonicPtzHttpInterface('127.0.0.1')
 		panasonicPTZ.on('error', onError)
@@ -122,12 +130,12 @@ describe('PanasonicAPI', () => {
 		expect(await panasonicPTZ.setZoomSpeed(49 + 50)).toEqual(49 + 50)
 		expect(await panasonicPTZ.setZoomSpeed(25 + 50)).toEqual(25 + 50)
 		expect(await panasonicPTZ.setZoom(0x555)).toEqual(0x555)
-		expect(await panasonicPTZ.setZoom((1 * 0xAAA) + 0x555)).toEqual((1 * 0xAAA) + 0x555)
+		expect(await panasonicPTZ.setZoom(1 * 0xaaa + 0x555)).toEqual(1 * 0xaaa + 0x555)
 
 		expect(await panasonicPTZ.getPreset()).toEqual(7)
 		expect(await panasonicPTZ.getSpeed()).toEqual(250)
 		expect(await panasonicPTZ.getZoomSpeed()).toEqual(25 + 50)
-		expect(await panasonicPTZ.getZoom()).toEqual((1 * 0xAAA) + 0x555)
+		expect(await panasonicPTZ.getZoom()).toEqual(1 * 0xaaa + 0x555)
 
 		// test that queueing works:
 		// mockDevice.preset = 0

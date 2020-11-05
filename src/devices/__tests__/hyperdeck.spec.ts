@@ -1,8 +1,5 @@
-
 import { Conductor } from '../../conductor'
-import {
-	HyperdeckDevice
-} from '../hyperdeck'
+import { HyperdeckDevice } from '../hyperdeck'
 import { RecordCommand, StopCommand } from 'hyperdeck-connection/dist/commands'
 import * as HyperdeckConnection from '../../__mocks__/hyperdeck-connection'
 import {
@@ -11,23 +8,22 @@ import {
 	TimelineContentTypeHyperdeck,
 	MappingHyperdeck,
 	MappingHyperdeckType,
-	TransportStatus
+	TransportStatus,
 } from '../../types/src'
 import { MockTime } from '../../__tests__/mockTime'
 import { ThreadedClass } from 'threadedclass'
 import { getMockCall } from '../../__tests__/lib'
 
-let myChannelMapping0: MappingHyperdeck = {
+const myChannelMapping0: MappingHyperdeck = {
 	device: DeviceType.HYPERDECK,
 	deviceId: 'hyperdeck0',
-	mappingType: MappingHyperdeckType.TRANSPORT
+	mappingType: MappingHyperdeckType.TRANSPORT,
 }
 
 describe('Hyperdeck', () => {
-
 	jest.mock('hyperdeck-connection', () => HyperdeckConnection)
 
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 
 	beforeAll(() => {
 		mockTime.mockDateNow()
@@ -37,21 +33,20 @@ describe('Hyperdeck', () => {
 	})
 
 	test('Hyperdeck: Record', async () => {
-		let device: ThreadedClass<HyperdeckDevice>
+		let device: ThreadedClass<HyperdeckDevice> | undefined = undefined
 
 		const commandReceiver0: any = jest.fn((...args: any[]) => {
 			// Just forward the command:
 
-			// @ts-ignore private function
-			return device._defaultCommandReceiver(...args)
+			return (device as any)._defaultCommandReceiver(...args)
 		})
-		let myChannelMapping: Mappings = {
-			'hyperdeck0_transport': myChannelMapping0
+		const myChannelMapping: Mappings = {
+			hyperdeck0_transport: myChannelMapping0,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 
@@ -61,24 +56,24 @@ describe('Hyperdeck', () => {
 			options: {
 				host: '127.0.0.1',
 				port: 9993,
-				commandReceiver: commandReceiver0
-			}
+				commandReceiver: commandReceiver0,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
 		expect(commandReceiver0).toHaveBeenCalledTimes(0)
 
-		let hyperdeckInstances = HyperdeckConnection.Hyperdeck.getMockInstances()
+		const hyperdeckInstances = HyperdeckConnection.Hyperdeck.getMockInstances()
 		expect(hyperdeckInstances).toHaveLength(1)
 
-		let hyperdeckMock: HyperdeckConnection.Hyperdeck = hyperdeckInstances[0]
+		const hyperdeckMock: HyperdeckConnection.Hyperdeck = hyperdeckInstances[0]
 
-		let hyperdeckMockCommand = jest.fn(() => {
+		const hyperdeckMockCommand = jest.fn(() => {
 			return Promise.resolve()
 		})
 		hyperdeckMock.setMockCommandReceiver(hyperdeckMockCommand)
 
-		let deviceContainer = myConductor.getDevice('hyperdeck0')
+		const deviceContainer = myConductor.getDevice('hyperdeck0')
 		device = deviceContainer.device as ThreadedClass<HyperdeckDevice>
 
 		// Check that no commands has been scheduled:
@@ -88,7 +83,7 @@ describe('Hyperdeck', () => {
 				id: 'obj0',
 				enable: {
 					start: 9000,
-					duration: 2000 // 11000
+					duration: 2000, // 11000
 				},
 				layer: 'hyperdeck0_transport',
 				content: {
@@ -96,24 +91,23 @@ describe('Hyperdeck', () => {
 					type: TimelineContentTypeHyperdeck.TRANSPORT,
 
 					status: TransportStatus.RECORD,
-					recordFilename: 'sofie_dev'
-
-				}
+					recordFilename: 'sofie_dev',
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: 10500,
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'hyperdeck0_transport',
 				content: {
 					deviceType: DeviceType.HYPERDECK,
 					type: TimelineContentTypeHyperdeck.TRANSPORT,
 
-					status: TransportStatus.PREVIEW
-				}
-			}
+					status: TransportStatus.PREVIEW,
+				},
+			},
 		])
 
 		await mockTime.advanceTimeToTicks(10200)
@@ -127,7 +121,7 @@ describe('Hyperdeck', () => {
 		// @todo: fix this test:
 		// expect(getMockCall(hyperdeckMockCommand, 0, 0)).toBeInstanceOf(RecordCommand)
 		expect(getMockCall(hyperdeckMockCommand, 0, 0)).toMatchObject({
-			filename: 'sofie_dev'
+			filename: 'sofie_dev',
 		})
 
 		myConductor.setTimelineAndMappings(myConductor.timeline) // Same timeline

@@ -45,14 +45,15 @@ export enum TimelineContentTypeVizMSE {
 	ELEMENT_PILOT = 'element_pilot',
 	CONTINUE = 'continue',
 	LOAD_ALL_ELEMENTS = 'load_all_elements',
-	CLEAR_ALL_ELEMENTS = 'clear_all_elements'
+	CLEAR_ALL_ELEMENTS = 'clear_all_elements',
 }
 
-export type TimelineObjVIZMSEAny = TimelineObjVIZMSEElementInternal |
-	TimelineObjVIZMSEElementPilot |
-	TimelineObjVIZMSEElementContinue |
-	TimelineObjVIZMSELoadAllElements |
-	TimelineObjVIZMSEClearAllElements
+export type TimelineObjVIZMSEAny =
+	| TimelineObjVIZMSEElementInternal
+	| TimelineObjVIZMSEElementPilot
+	| TimelineObjVIZMSEElementContinue
+	| TimelineObjVIZMSELoadAllElements
+	| TimelineObjVIZMSEClearAllElements
 
 export interface TimelineObjVIZMSEBase extends TSRTimelineObjBase {
 	content: {
@@ -158,7 +159,7 @@ export interface VIZMSETransitionBase {
 	type: VIZMSETransitionType
 }
 export enum VIZMSETransitionType {
-	DELAY = 0
+	DELAY = 0,
 }
 export interface VIZMSETransitionDelay {
 	type: VIZMSETransitionType.DELAY

@@ -17,7 +17,7 @@ export enum QuantelControlMode {
 	/** Try to avoid freeze-frames when playing */
 	QUALITY = 'quality',
 	/** Try to play as fast as possible */
-	SPEED = 'speed'
+	SPEED = 'speed',
 }
 
 export interface QuantelOptions {
@@ -40,9 +40,7 @@ export interface QuantelOptions {
 	// doAutomaticCloningIfNeeded?: bool // not implemented yet
 }
 
-export type TimelineObjQuantelAny = (
-	TimelineObjQuantelClip
-)
+export type TimelineObjQuantelAny = TimelineObjQuantelClip
 export interface TimelineObjQuantelClip extends TSRTimelineObjBaseWithOnAir {
 	content: {
 		deviceType: DeviceType.QUANTEL
@@ -69,7 +67,6 @@ export interface TimelineObjQuantelClip extends TSRTimelineObjBaseWithOnAir {
 
 		// inTransition?: QuantelTransition
 		outTransition?: QuantelOutTransition
-
 	}
 }
 export type QuantelOutTransition = QuantelTransitionDelay
@@ -77,7 +74,7 @@ export interface QuantelTransitionBase {
 	type: QuantelTransitionType
 }
 export enum QuantelTransitionType {
-	DELAY = 0
+	DELAY = 0,
 }
 export interface QuantelTransitionDelay {
 	type: QuantelTransitionType.DELAY

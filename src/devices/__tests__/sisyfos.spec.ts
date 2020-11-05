@@ -1,9 +1,5 @@
 import { Conductor } from '../../conductor'
-import {
-	Mappings,
-	DeviceType,
-	TSRTimeline
-} from '../../types/src'
+import { Mappings, DeviceType, TSRTimeline } from '../../types/src'
 import * as OSC from '../../__mocks__/osc'
 const MockOSC = OSC.MockOSC
 import { MockTime } from '../../__tests__/mockTime'
@@ -14,11 +10,11 @@ import { getMockCall } from '../../__tests__/lib'
 
 describe('Sisyfos', () => {
 	jest.mock('osc', () => OSC)
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 
 	const orgSetTimeout = setTimeout
 
-	function wait (time: number = 1) {
+	function wait(time = 1) {
 		return new Promise((resolve) => {
 			orgSetTimeout(resolve, time)
 		})
@@ -32,44 +28,43 @@ describe('Sisyfos', () => {
 	})
 
 	test('Sisyfos: set ch1: pgm & ch2: lookahead and then ch1: vo, ch2: pgm', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingSisyfos = {
+		const myChannelMapping0: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 0
+			channel: 0,
 		}
-		let myChannelMapping1: MappingSisyfos = {
+		const myChannelMapping1: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping2: MappingSisyfos = {
+		const myChannelMapping2: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		// @ts-ignore skipping .mappingType to test backwards compatibility
-		let myChannelMapping3: MappingSisyfos = {
+		// @ts-expect-error: skipping .mappingType to test backwards compatibility
+		const myChannelMapping3: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			deviceId: 'mySisyfos',
-			channel: 3
+			channel: 3,
 		}
-		let myChannelMapping: Mappings = {
-			'sisyfos_channel_1': myChannelMapping0,
-			'sisyfos_channel_2': myChannelMapping1,
-			'sisyfos_channel_2_lookahead': myChannelMapping2,
-			'sisyfos_channel_3': myChannelMapping3
+		const myChannelMapping: Mappings = {
+			sisyfos_channel_1: myChannelMapping0,
+			sisyfos_channel_2: myChannelMapping1,
+			sisyfos_channel_2_lookahead: myChannelMapping2,
+			sisyfos_channel_3: myChannelMapping3,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init() // we cannot do an await, because setTimeout will never call without jest moving on.
@@ -78,13 +73,13 @@ describe('Sisyfos', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.10',
-				port: 8900
-			}
+				port: 8900,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('mySisyfos')
-		let device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
+		const deviceContainer = myConductor.getDevice('mySisyfos')
+		const device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
 
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
@@ -94,102 +89,100 @@ describe('Sisyfos', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now - 1000, // 1 seconds in the past
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_1',
-				// @ts-ignore: for backwards compatibility
 				content: {
 					deviceType: DeviceType.SISYFOS,
-					// @ts-ignore: for backwards compatibility
 					type: 'sisyfos',
 
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 4000
+					duration: 4000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 2
-				}
+					isPgm: 2,
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2_lookahead',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
+					isPgm: 1,
 				},
 				isLookahead: true,
-				lookaheadForLayer: 'sisyfos_channel_2'
+				lookaheadForLayer: 'sisyfos_channel_2',
 			},
 			{
 				id: 'obj3',
 				enable: {
 					start: mockTime.now + 3000, // 3 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj5',
 				enable: {
 					start: mockTime.now + 5000, // 5 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					label: 'MY TIME'
-				}
+					label: 'MY TIME',
+				},
 			},
 			{
 				id: 'obj6',
 				enable: {
 					start: mockTime.now + 6000, // 6 seconds in the future
-					duration: 900
+					duration: 900,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					visible: false
-				}
+					visible: false,
+				},
 			},
 			{
 				id: 'obj7',
 				enable: {
 					start: mockTime.now + 7000, // 7 seconds in the future
-					duration: 900
+					duration: 900,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					visible: true
-				}
-			}
+					visible: true,
+				},
+			},
 		] as TSRTimeline)
 
 		await mockTime.advanceTimeTicks(100) // now-ish
@@ -198,7 +191,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 0,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(1000) // 1 seconds into the future
@@ -207,7 +200,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 2, 1)).toMatchObject({
 			type: 'togglePst',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(2000) // 3 seconds into the future
@@ -216,7 +209,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 3, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(3000) // 6 seconds into the future
@@ -225,66 +218,65 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 4, 1)).toMatchObject({
 			type: 'togglePst',
 			channel: 1,
-			value: 0
+			value: 0,
 		})
 		// set pst off
 		expect(getMockCall(commandReceiver0, 5, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 0,
-			value: 0
+			value: 0,
 		})
 		// set new label
 		expect(getMockCall(commandReceiver0, 6, 1)).toMatchObject({
 			type: 'label',
 			channel: 0,
-			value: 'MY TIME'
+			value: 'MY TIME',
 		})
 		// set visible false
 		expect(getMockCall(commandReceiver0, 8, 1)).toMatchObject({
 			type: 'visible',
 			channel: 0,
-			value: false
+			value: false,
 		})
 	})
 	test('Sisyfos: set ch1: pgm & ch2: lookahead and then ch1: vo, ch2: pgm', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingSisyfos = {
+		const myChannelMapping0: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 0
+			channel: 0,
 		}
-		let myChannelMapping1: MappingSisyfos = {
+		const myChannelMapping1: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping2: MappingSisyfos = {
+		const myChannelMapping2: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping3: MappingSisyfos = {
+		const myChannelMapping3: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 3
+			channel: 3,
 		}
-		let myChannelMapping: Mappings = {
-			'sisyfos_channel_1': myChannelMapping0,
-			'sisyfos_channel_2': myChannelMapping1,
-			'sisyfos_channel_2_lookahead': myChannelMapping2,
-			'sisyfos_channel_3': myChannelMapping3
+		const myChannelMapping: Mappings = {
+			sisyfos_channel_1: myChannelMapping0,
+			sisyfos_channel_2: myChannelMapping1,
+			sisyfos_channel_2_lookahead: myChannelMapping2,
+			sisyfos_channel_3: myChannelMapping3,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init() // we cannot do an await, because setTimeout will never call without jest moving on.
@@ -293,13 +285,13 @@ describe('Sisyfos', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.10',
-				port: 8900
-			}
+				port: 8900,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('mySisyfos')
-		let device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
+		const deviceContainer = myConductor.getDevice('mySisyfos')
+		const device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
 
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
@@ -309,100 +301,100 @@ describe('Sisyfos', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now - 1000, // 1 seconds in the past
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 4000
+					duration: 4000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 2
-				}
+					isPgm: 2,
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2_lookahead',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
+					isPgm: 1,
 				},
 				isLookahead: true,
-				lookaheadForLayer: 'sisyfos_channel_2'
+				lookaheadForLayer: 'sisyfos_channel_2',
 			},
 			{
 				id: 'obj3',
 				enable: {
 					start: mockTime.now + 3000, // 3 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj5',
 				enable: {
 					start: mockTime.now + 5000, // 5 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					label: 'MY TIME'
-				}
+					label: 'MY TIME',
+				},
 			},
 			{
 				id: 'obj6',
 				enable: {
 					start: mockTime.now + 6000, // 6 seconds in the future
-					duration: 900
+					duration: 900,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					visible: false
-				}
+					visible: false,
+				},
 			},
 			{
 				id: 'obj7',
 				enable: {
 					start: mockTime.now + 7000, // 7 seconds in the future
-					duration: 900
+					duration: 900,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					visible: true
-				}
-			}
+					visible: true,
+				},
+			},
 		])
 
 		await mockTime.advanceTimeTicks(100) // now-ish
@@ -411,7 +403,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 0,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(1000) // 1 seconds into the future
@@ -420,7 +412,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 2, 1)).toMatchObject({
 			type: 'togglePst',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(2000) // 3 seconds into the future
@@ -429,7 +421,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 3, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(3000) // 6 seconds into the future
@@ -438,67 +430,66 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 4, 1)).toMatchObject({
 			type: 'togglePst',
 			channel: 1,
-			value: 0
+			value: 0,
 		})
 		// set pst off
 		expect(getMockCall(commandReceiver0, 5, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 0,
-			value: 0
+			value: 0,
 		})
 		// set new label
 		expect(getMockCall(commandReceiver0, 6, 1)).toMatchObject({
 			type: 'label',
 			channel: 0,
-			value: 'MY TIME'
+			value: 'MY TIME',
 		})
 		// set visible false
 		expect(getMockCall(commandReceiver0, 8, 1)).toMatchObject({
 			type: 'visible',
 			channel: 0,
-			value: false
+			value: false,
 		})
 	})
 
 	test('Sisyfos: set lookahead and take to pgm, with lookahead still on', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingSisyfos = {
+		const myChannelMapping0: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 0
+			channel: 0,
 		}
-		let myChannelMapping1: MappingSisyfos = {
+		const myChannelMapping1: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping2: MappingSisyfos = {
+		const myChannelMapping2: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping3: MappingSisyfos = {
+		const myChannelMapping3: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 3
+			channel: 3,
 		}
-		let myChannelMapping: Mappings = {
-			'sisyfos_channel_1': myChannelMapping0,
-			'sisyfos_channel_2': myChannelMapping1,
-			'sisyfos_channel_2_lookahead': myChannelMapping2,
-			'sisyfos_channel_3': myChannelMapping3
+		const myChannelMapping: Mappings = {
+			sisyfos_channel_1: myChannelMapping0,
+			sisyfos_channel_2: myChannelMapping1,
+			sisyfos_channel_2_lookahead: myChannelMapping2,
+			sisyfos_channel_3: myChannelMapping3,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init() // we cannot do an await, because setTimeout will never call without jest moving on.
@@ -507,13 +498,13 @@ describe('Sisyfos', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.10',
-				port: 8900
-			}
+				port: 8900,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('mySisyfos')
-		let device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
+		const deviceContainer = myConductor.getDevice('mySisyfos')
+		const device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
 
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
@@ -523,48 +514,48 @@ describe('Sisyfos', () => {
 				id: 'obj0',
 				enable: {
 					start: mockTime.now - 1000, // 1 seconds in the past
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2_lookahead',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
+					isPgm: 1,
 				},
 				isLookahead: true,
-				lookaheadForLayer: 'sisyfos_channel_2'
+				lookaheadForLayer: 'sisyfos_channel_2',
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the past
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2_lookahead',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
 
-					isPgm: 0
+					isPgm: 0,
 				},
 				isLookahead: true,
-				lookaheadForLayer: 'sisyfos_channel_2'
-			}
+				lookaheadForLayer: 'sisyfos_channel_2',
+			},
 		])
 
 		await mockTime.advanceTimeTicks(100) // now-ish
@@ -573,7 +564,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'togglePst',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 
 		await mockTime.advanceTimeTicks(1000) // 1 seconds into the future
@@ -586,47 +577,46 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 3, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 1,
-			value: 0
+			value: 0,
 		})
 	})
 
 	test('Sisyfos: using CHANNELS', async () => {
-
 		const commandReceiver0: any = jest.fn(() => {
 			return Promise.resolve()
 		})
-		let myChannelMapping0: MappingSisyfos = {
+		const myChannelMapping0: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNELS,
-			deviceId: 'mySisyfos'
+			deviceId: 'mySisyfos',
 		}
-		let myChannelMapping1: MappingSisyfos = {
+		const myChannelMapping1: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 1
+			channel: 1,
 		}
-		let myChannelMapping2: MappingSisyfos = {
+		const myChannelMapping2: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNEL,
 			deviceId: 'mySisyfos',
-			channel: 2
+			channel: 2,
 		}
-		let myChannelMapping3: MappingSisyfos = {
+		const myChannelMapping3: MappingSisyfos = {
 			device: DeviceType.SISYFOS,
 			mappingType: MappingSisyfosType.CHANNELS,
-			deviceId: 'mySisyfos'
+			deviceId: 'mySisyfos',
 		}
-		let myChannelMapping: Mappings = {
-			'sisyfos_channels_base': myChannelMapping0,
-			'sisyfos_channel_1': myChannelMapping1,
-			'sisyfos_channel_2': myChannelMapping2,
-			'sisyfos_channels': myChannelMapping3
+		const myChannelMapping: Mappings = {
+			sisyfos_channels_base: myChannelMapping0,
+			sisyfos_channel_1: myChannelMapping1,
+			sisyfos_channel_2: myChannelMapping2,
+			sisyfos_channels: myChannelMapping3,
 		}
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init() // we cannot do an await, because setTimeout will never call without jest moving on.
@@ -635,13 +625,13 @@ describe('Sisyfos', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '192.168.0.10',
-				port: 8900
-			}
+				port: 8900,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('mySisyfos')
-		let device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
+		const deviceContainer = myConductor.getDevice('mySisyfos')
+		const device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
 
 		// Check that no commands has been scheduled:
 		expect(await device.queue).toHaveLength(0)
@@ -650,7 +640,7 @@ describe('Sisyfos', () => {
 			{
 				id: 'baseline',
 				enable: {
-					while: 1
+					while: 1,
 				},
 				layer: 'sisyfos_channels_base',
 				content: {
@@ -661,48 +651,48 @@ describe('Sisyfos', () => {
 						{
 							mappedLayer: 'sisyfos_channel_1',
 							faderLevel: 0.1,
-							isPgm: 0
+							isPgm: 0,
 						},
 						{
 							mappedLayer: 'sisyfos_channel_2',
 							faderLevel: 0.2,
-							isPgm: 0
-						}
+							isPgm: 0,
+						},
 					],
-					overridePriority: -999
-				}
+					overridePriority: -999,
+				},
 			},
 			{
 				id: 'obj1',
 				enable: {
 					start: mockTime.now + 1000, // 1 seconds in the future
-					duration: 10000
+					duration: 10000,
 				},
 				layer: 'sisyfos_channel_1',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj2',
 				enable: {
 					start: mockTime.now + 2000, // 2 seconds in the future
-					duration: 2000
+					duration: 2000,
 				},
 				layer: 'sisyfos_channel_2',
 				content: {
 					deviceType: DeviceType.SISYFOS,
 					type: TimelineContentTypeSisyfos.CHANNEL,
-					isPgm: 1
-				}
+					isPgm: 1,
+				},
 			},
 			{
 				id: 'obj3',
 				enable: {
 					start: mockTime.now + 3000, // 3 seconds in the future
-					duration: 1000
+					duration: 1000,
 				},
 				layer: 'sisyfos_channels',
 				content: {
@@ -712,16 +702,16 @@ describe('Sisyfos', () => {
 					channels: [
 						{
 							mappedLayer: 'sisyfos_channel_1',
-							faderLevel: 0.75
+							faderLevel: 0.75,
 						},
 						{
 							mappedLayer: 'sisyfos_channel_2',
-							faderLevel: 0.74
-						}
+							faderLevel: 0.74,
+						},
 					],
-					overridePriority: -999
-				}
-			}
+					overridePriority: -999,
+				},
+			},
 		])
 
 		// baseline:
@@ -730,7 +720,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'setFader',
 			channel: 1,
-			value: 0.1
+			value: 0.1,
 		})
 		commandReceiver0.mockClear()
 
@@ -740,7 +730,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 1,
-			value: 1
+			value: 1,
 		})
 		commandReceiver0.mockClear()
 
@@ -750,7 +740,7 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 2,
-			value: 1
+			value: 1,
 		})
 		commandReceiver0.mockClear()
 
@@ -760,12 +750,12 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'setFader',
 			channel: 1,
-			value: 0.75
+			value: 0.75,
 		})
 		expect(getMockCall(commandReceiver0, 1, 1)).toMatchObject({
 			type: 'setFader',
 			channel: 2,
-			value: 0.74
+			value: 0.74,
 		})
 		commandReceiver0.mockClear()
 
@@ -775,17 +765,17 @@ describe('Sisyfos', () => {
 		expect(getMockCall(commandReceiver0, 0, 1)).toMatchObject({
 			type: 'setFader',
 			channel: 1,
-			value: 0.1
+			value: 0.1,
 		})
 		expect(getMockCall(commandReceiver0, 1, 1)).toMatchObject({
 			type: 'togglePgm',
 			channel: 2,
-			value: 0
+			value: 0,
 		})
 		expect(getMockCall(commandReceiver0, 2, 1)).toMatchObject({
 			type: 'setFader',
 			channel: 2,
-			value: 0.2
+			value: 0.2,
 		})
 
 		commandReceiver0.mockClear()
@@ -796,9 +786,9 @@ describe('Sisyfos', () => {
 			return Promise.resolve()
 		})
 
-		let myConductor = new Conductor({
+		const myConductor = new Conductor({
 			initializeAsClear: true,
-			getCurrentTime: mockTime.getCurrentTime
+			getCurrentTime: mockTime.getCurrentTime,
 		})
 		// myConductor.setTimelineAndMappings([], myChannelMapping)
 		await myConductor.init()
@@ -807,15 +797,15 @@ describe('Sisyfos', () => {
 			options: {
 				commandReceiver: commandReceiver0,
 				host: '127.0.0.1',
-				port: 1234
-			}
+				port: 1234,
+			},
 		})
 		await mockTime.advanceTimeToTicks(10100)
 
-		let deviceContainer = myConductor.getDevice('mySisyfos')
-		let device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
+		const deviceContainer = myConductor.getDevice('mySisyfos')
+		const device = deviceContainer.device as ThreadedClass<SisyfosMessageDevice>
 
-		let onConnectionChanged = jest.fn()
+		const onConnectionChanged = jest.fn()
 		await device.on('connectionChanged', onConnectionChanged)
 
 		// Check that no commands has been scheduled:
@@ -827,9 +817,9 @@ describe('Sisyfos', () => {
 		MockOSC.connectionIsGood = false
 
 		await mockTime.advanceTimeTicks(3000)
-		await(wait(1))
+		await wait(1)
 		await mockTime.advanceTimeTicks(3000)
-		await(wait(1))
+		await wait(1)
 
 		expect(await device.connected).toEqual(false)
 		expect(onConnectionChanged).toHaveBeenCalledTimes(1)
@@ -837,9 +827,9 @@ describe('Sisyfos', () => {
 		// Simulate a connection regain:
 		MockOSC.connectionIsGood = true
 		await mockTime.advanceTimeTicks(3000)
-		await(wait(1))
+		await wait(1)
 		await mockTime.advanceTimeTicks(3000)
-		await(wait(1))
+		await wait(1)
 
 		expect(await device.connected).toEqual(true)
 		expect(onConnectionChanged).toHaveBeenCalledTimes(4)

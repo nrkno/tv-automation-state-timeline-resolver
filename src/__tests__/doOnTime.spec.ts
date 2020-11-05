@@ -2,7 +2,7 @@ import { MockTime } from './mockTime'
 import { DoOnTime, SendMode } from '../doOnTime'
 
 describe('DoOnTime', () => {
-	let mockTime = new MockTime()
+	const mockTime = new MockTime()
 	beforeAll(() => {
 		mockTime.mockDateNow()
 	})
@@ -11,13 +11,9 @@ describe('DoOnTime', () => {
 	})
 
 	test('Burst', async () => {
-
-		const d = new DoOnTime(
-			() => {
-				return mockTime.now
-			},
-			SendMode.BURST
-		)
+		const d = new DoOnTime(() => {
+			return mockTime.now
+		}, SendMode.BURST)
 		const onError = jest.fn((...args) => {
 			console.log(...args)
 		})
@@ -60,14 +56,13 @@ describe('DoOnTime', () => {
 		d.dispose()
 	})
 	test('In Order', async () => {
-
 		const d = new DoOnTime(
 			() => {
 				return mockTime.now
 			},
 			SendMode.IN_ORDER,
 			{
-				limitSlowSentCommand: 50
+				limitSlowSentCommand: 50,
 			}
 		)
 		const onError = jest.fn((...args) => {
@@ -107,14 +102,13 @@ describe('DoOnTime', () => {
 		d.dispose()
 	})
 	test('In Order, queues', async () => {
-
 		const d = new DoOnTime(
 			() => {
 				return mockTime.now
 			},
 			SendMode.IN_ORDER,
 			{
-				limitSlowSentCommand: 50
+				limitSlowSentCommand: 50,
 			}
 		)
 		const onError = jest.fn((...args) => {
@@ -171,7 +165,7 @@ describe('DoOnTime', () => {
 		d.dispose()
 	})
 })
-function wait (time: number = 1) {
+function wait(time = 1) {
 	return new Promise((resolve) => {
 		setTimeout(resolve, time)
 	})

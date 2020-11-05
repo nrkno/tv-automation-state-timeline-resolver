@@ -1,9 +1,5 @@
 // These imports are pointed to what external libraries will import
-import {
-	DeviceType as Types_DeviceType,
-	TSRTimeline,
-	TimelineObjEmpty
-} from '../../dist'
+import { DeviceType as Types_DeviceType, TSRTimeline, TimelineObjEmpty } from '../../dist'
 
 describe('Usage of library', () => {
 	// These tests test that the library can be imported and used by the library consumers.
@@ -17,14 +13,14 @@ describe('Usage of library', () => {
 			id: 'myId',
 			enable: {
 				start: 0,
-				duration: 42
+				duration: 42,
 			},
 			layer: 'myLayer',
 			content: {
 				deviceType: Types_DeviceType.ABSTRACT,
-				type: 'empty'
+				type: 'empty',
 			},
-			classes: []
+			classes: [],
 		}
 		const tl: TSRTimeline = [obj]
 		expect(tl[0].content.deviceType).toEqual(0)

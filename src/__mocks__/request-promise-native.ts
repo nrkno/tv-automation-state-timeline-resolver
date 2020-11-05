@@ -51,7 +51,7 @@ const request = {
 	},
 	delete: (uri: string, options: any = {}) => {
 		return _mockDelete(uri, options.json)
-	}
+	},
 }
 
 export = request

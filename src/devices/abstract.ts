@@ -1,11 +1,5 @@
-import * as _ from 'underscore'
-import {
-	DeviceWithState,
-	CommandWithContext,
-	DeviceStatus,
-	StatusCode,
-	IDevice
-} from './device'
+import _ from 'underscore'
+import { DeviceWithState, CommandWithContext, DeviceStatus, StatusCode, IDevice } from './device'
 import { DeviceType, AbstractOptions, DeviceOptionsAbstract, Mappings } from '../types/src'
 
 import { TimelineState, ResolvedTimelineObjectInstance } from 'superfly-timeline'
@@ -21,12 +15,14 @@ type CommandContent = any
 type CommandContext = string
 
 export interface DeviceOptionsAbstractInternal extends DeviceOptionsAbstract {
-	options: (
-		DeviceOptionsAbstract['options'] &
-		{ commandReceiver?: CommandReceiver }
-	)
+	options: DeviceOptionsAbstract['options'] & { commandReceiver?: CommandReceiver }
 }
-export type CommandReceiver = (time: number, cmd: Command, context: CommandContext, timelineObjId: string) => Promise<any>
+export type CommandReceiver = (
+	time: number,
+	cmd: Command,
+	context: CommandContext,
+	timelineObjId: string
+) => Promise<any>
 type AbstractState = TimelineState
 /*
 	This is a wrapper for an "Abstract" device
@@ -39,29 +35,33 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 
 	private _commandReceiver: CommandReceiver
 
-	constructor (deviceId: string, deviceOptions: DeviceOptionsAbstractInternal, options) {
-		super(deviceId, deviceOptions, options)
-		if (deviceOptions.options) {
-			if (deviceOptions.options.commandReceiver) this._commandReceiver = deviceOptions.options.commandReceiver
-			else this._commandReceiver = this._defaultCommandReceiver
-		}
-		this._doOnTime = new DoOnTime(() => {
-			return this.getCurrentTime()
-		}, SendMode.BURST, this._deviceOptions)
+	constructor(deviceId: string, deviceOptions: DeviceOptionsAbstractInternal, getCurrentTime: () => Promise<number>) {
+		super(deviceId, deviceOptions, getCurrentTime)
+
+		if (deviceOptions.options.commandReceiver) this._commandReceiver = deviceOptions.options.commandReceiver
+		else this._commandReceiver = this._defaultCommandReceiver
+
+		this._doOnTime = new DoOnTime(
+			() => {
+				return this.getCurrentTime()
+			},
+			SendMode.BURST,
+			this._deviceOptions
+		)
 		this.handleDoOnTime(this._doOnTime, 'Abstract')
 	}
 
 	/**
 	 * Initiates the connection with CasparCG through the ccg-connection lib.
 	 */
-	init (_initOptions: AbstractOptions): Promise<boolean> {
-		return new Promise((resolve/*, reject*/) => {
+	init(_initOptions: AbstractOptions): Promise<boolean> {
+		return new Promise((resolve /*, reject*/) => {
 			// This is where we would do initialization, like connecting to the devices, etc
 			resolve(true)
 		})
 	}
 	/** Called by the Conductor a bit before a .handleState is called */
-	prepareForHandleState (newStateTime: number) {
+	prepareForHandleState(newStateTime: number) {
 		// clear any queued commands later than this time:
 		this._doOnTime.clearQueueNowAndAfter(newStateTime)
 		this.cleanUpStates(0, newStateTime)
@@ -70,15 +70,17 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 	 * Handle a new state, at the point in time specified
 	 * @param newState
 	 */
-	handleState (newState: TimelineState, newMappings: Mappings) {
+	handleState(newState: TimelineState, newMappings: Mappings) {
 		super.onHandleState(newState, newMappings)
-		let previousStateTime = Math.max(this.getCurrentTime(), newState.time)
-		let oldState: TimelineState = (this.getStateBefore(previousStateTime) || { state: { time: 0, layers: {}, nextEvents: [] } }).state
+		const previousStateTime = Math.max(this.getCurrentTime(), newState.time)
+		const oldState: TimelineState = (
+			this.getStateBefore(previousStateTime) || { state: { time: 0, layers: {}, nextEvents: [] } }
+		).state
 
-		let oldAbstractState = this.convertStateToAbstract(oldState)
-		let newAbstractState = this.convertStateToAbstract(newState)
+		const oldAbstractState = this.convertStateToAbstract(oldState)
+		const newAbstractState = this.convertStateToAbstract(newState)
 
-		let commandsToAchieveState: Array<Command> = this._diffStates(oldAbstractState, newAbstractState)
+		const commandsToAchieveState: Array<Command> = this._diffStates(oldAbstractState, newAbstractState)
 
 		// clear any queued commands later than this time:
 		this._doOnTime.clearQueueNowAndAfter(previousStateTime)
@@ -92,54 +94,58 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 	 * Clear any scheduled commands after this time
 	 * @param clearAfterTime
 	 */
-	clearFuture (clearAfterTime: number) {
+	clearFuture(clearAfterTime: number) {
 		this._doOnTime.clearQueueAfter(clearAfterTime)
 	}
 	/**
 	 * Dispose of the device so it can be garbage collected.
 	 */
-	terminate () {
+	terminate() {
 		this._doOnTime.dispose()
 		return Promise.resolve(true)
 	}
-	get canConnect (): boolean {
+	get canConnect(): boolean {
 		return false
 	}
-	get connected (): boolean {
+	get connected(): boolean {
 		return false
 	}
 	/**
 	 * converts the timeline state into something we can use
 	 * @param state
 	 */
-	convertStateToAbstract (state: TimelineState) {
+	convertStateToAbstract(state: TimelineState) {
 		return state
 	}
-	get deviceType () {
+	get deviceType() {
 		return DeviceType.ABSTRACT
 	}
-	get deviceName (): string {
+	get deviceName(): string {
 		return 'Abstract ' + this.deviceId
 	}
-	get queue () {
+	get queue() {
 		return this._doOnTime.getQueue()
 	}
-	getStatus (): DeviceStatus {
+	getStatus(): DeviceStatus {
 		return {
 			statusCode: StatusCode.GOOD,
-			active: this.isActive
+			active: this.isActive,
 		}
 	}
 	/**
 	 * Add commands to queue, to be executed at the right time
 	 */
-	private _addToQueue (commandsToAchieveState: Array<Command>, time: number) {
+	private _addToQueue(commandsToAchieveState: Array<Command>, time: number) {
 		_.each(commandsToAchieveState, (cmd: Command) => {
-
 			// add the new commands to the queue:
-			this._doOnTime.queue(time, undefined, (cmd: Command) => {
-				return this._commandReceiver(time, cmd, cmd.context, cmd.timelineObjId)
-			}, cmd)
+			this._doOnTime.queue(
+				time,
+				undefined,
+				(cmd: Command) => {
+					return this._commandReceiver(time, cmd, cmd.context, cmd.timelineObjId)
+				},
+				cmd
+			)
 		})
 	}
 	/**
@@ -147,20 +153,20 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 	 * @param oldAbstractState
 	 * @param newAbstractState
 	 */
-	private _diffStates (oldAbstractState: TimelineState, newAbstractState: TimelineState) {
+	private _diffStates(oldAbstractState: TimelineState, newAbstractState: TimelineState) {
 		// in this abstract class, let's just cheat:
 
-		let commands: Array<Command> = []
+		const commands: Array<Command> = []
 
 		_.each(newAbstractState.layers, (newLayer: ResolvedTimelineObjectInstance, layerKey) => {
-			let oldLayer = oldAbstractState.layers[layerKey]
+			const oldLayer = oldAbstractState.layers[layerKey]
 			if (!oldLayer) {
 				// added!
 				commands.push({
 					commandName: 'addedAbstract',
 					content: newLayer.content,
 					timelineObjId: newLayer.id,
-					context: `added: ${newLayer.id}`
+					context: `added: ${newLayer.id}`,
 				})
 			} else {
 				// changed?
@@ -170,37 +176,40 @@ export class AbstractDevice extends DeviceWithState<AbstractState> implements ID
 						commandName: 'changedAbstract',
 						content: newLayer.content,
 						timelineObjId: newLayer.id,
-						context: `changed: ${newLayer.id}`
+						context: `changed: ${newLayer.id}`,
 					})
 				}
 			}
 		})
 		// removed
 		_.each(oldAbstractState.layers, (oldLayer: ResolvedTimelineObjectInstance, layerKey) => {
-			let newLayer = newAbstractState.layers[layerKey]
+			const newLayer = newAbstractState.layers[layerKey]
 			if (!newLayer) {
 				// removed!
 				commands.push({
 					commandName: 'removedAbstract',
 					content: oldLayer.content,
 					timelineObjId: oldLayer.id,
-					context: `removed: ${oldLayer.id}`
+					context: `removed: ${oldLayer.id}`,
 				})
 			}
 		})
 		return commands
 	}
-	private _defaultCommandReceiver (time: number, cmd: Command, context: CommandContext, timelineObjId: string): Promise<any> {
-		time = time
-
+	private _defaultCommandReceiver(
+		_time: number,
+		cmd: Command,
+		context: CommandContext,
+		timelineObjId: string
+	): Promise<any> {
 		// emit the command to debug:
-		let cwc: CommandWithContext = {
+		const cwc: CommandWithContext = {
 			timelineObjId: timelineObjId,
 			context: context,
 			command: {
 				commandName: cmd.commandName,
-				content: cmd.content
-			}
+				content: cmd.content,
+			},
 		}
 		this.emit('debug', cwc)
 

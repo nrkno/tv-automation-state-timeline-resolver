@@ -12,7 +12,7 @@ export interface MappingPharos extends Mapping {
 
 export enum TimelineContentTypePharos {
 	SCENE = 'scene',
-	TIMELINE = 'timeline'
+	TIMELINE = 'timeline',
 }
 
 export type TimelineObjPharosAny = TimelineObjPharosScene | TimelineObjPharosTimeline
