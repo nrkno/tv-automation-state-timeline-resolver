@@ -8,13 +8,13 @@ import { DeviceType, DeviceOptionsAny } from '../types/src'
  * names and id's) to prevent a costly round trip over IPC.
  */
 export class DeviceContainer {
-	public _device: ThreadedClass<Device>
+	public _device?: ThreadedClass<Device>
 	public _deviceId = 'N/A'
-	public _deviceType: DeviceType
-	public _deviceName = 'N/A'
-	public _deviceOptions: DeviceOptionsAny
+	public _deviceType?: DeviceType
+	public _deviceName? = 'N/A'
+	public _deviceOptions?: DeviceOptionsAny
 	public _threadConfig: ThreadedClassConfig | undefined
-	public onChildClose: () => void | undefined
+	public onChildClose?: () => void | undefined
 	private _instanceId = -1
 	private _startTime = -1
 	private _onEventListener: { stop: () => void } | undefined
@@ -68,22 +68,27 @@ export class DeviceContainer {
 		if (this._onEventListener) {
 			this._onEventListener.stop()
 		}
-		await ThreadedClassManager.destroy(this._device)
+		if (this._device) await ThreadedClassManager.destroy(this._device)
 	}
 
 	public get device(): ThreadedClass<Device> {
+		if (!this._device) throw new Error('Not yet initialized')
 		return this._device
 	}
 	public get deviceId(): string {
+		if (!this._deviceId) throw new Error('Not yet initialized')
 		return this._deviceId
 	}
 	public get deviceType(): DeviceType {
+		if (!this._deviceType) throw new Error('Not yet initialized')
 		return this._deviceType
 	}
 	public get deviceName(): string {
+		if (!this._deviceName) throw new Error('Not yet initialized')
 		return this._deviceName
 	}
 	public get deviceOptions(): DeviceOptionsAny {
+		if (!this._deviceOptions) throw new Error('Not yet initialized')
 		return this._deviceOptions
 	}
 	public get threadConfig(): ThreadedClassConfig | undefined {

@@ -261,7 +261,7 @@ export class OSCMessageDevice extends DeviceWithState<OSCDeviceState> implements
 		try {
 			if (cmd.transition && cmd.from) {
 				const easingType = Easing[cmd.transition.type]
-				const easing = (easingType || {})[cmd.transition.direction]
+				const easing = (easingType as any)[cmd.transition.direction]
 
 				if (!easing) throw new Error(`Easing "${cmd.transition.type}.${cmd.transition.direction}" not found`)
 

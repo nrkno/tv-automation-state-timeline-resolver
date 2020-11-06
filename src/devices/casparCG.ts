@@ -38,9 +38,11 @@ import {
 	NextUp,
 	Transition,
 	Mixer,
+	AMCPCommandWithContext,
 } from 'casparcg-state'
 import { DoOnTime, SendMode } from '../doOnTime'
 import * as request from 'request'
+import { InternalState } from 'casparcg-state/dist/lib/stateObjectStorage'
 
 const MAX_TIMESYNC_TRIES = 5
 const MAX_TIMESYNC_DURATION = 40
@@ -62,7 +64,7 @@ export type CommandReceiver = (
  * optionally, uses the CasparCG command scheduling features.
  */
 export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
-	private _ccg: CasparCG
+	private _ccg: CasparCG = new CasparCG({ autoConnect: false })
 	private _ccgState: CasparCGState
 	private _queue: { [token: string]: { time: number; command: CommandNS.IAMCPCommand } } = {}
 	private _commandReceiver: CommandReceiver
@@ -72,7 +74,7 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 	private _doOnTime: DoOnTime
 	private initOptions?: CasparCGOptions
 	private _connected = false
-	private _retryTimeout: NodeJS.Timeout
+	private _retryTimeout?: NodeJS.Timeout
 	private _retryTime: number | null = null
 
 	constructor(deviceId: string, deviceOptions: DeviceOptionsCasparCGInternal, getCurrentTime: () => Promise<number>) {
@@ -149,7 +151,7 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 	 */
 	terminate(): Promise<boolean> {
 		this._doOnTime.dispose()
-		clearTimeout(this._retryTimeout)
+		if (this._retryTimeout) clearTimeout(this._retryTimeout)
 		return new Promise((resolve) => {
 			this._ccg.disconnect()
 			this._ccg.onDisconnected = () => {
@@ -546,7 +548,7 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 		// Sync Caspar Time to our time:
 		const command = await this._ccg.info()
 		const channels: any[] = command.response.data
-		const attemptSync = async (channelNo, tries): Promise<void> => {
+		const attemptSync = async (channelNo: number, tries: number): Promise<void> => {
 			const startTime = this.getCurrentTime()
 			await this._commandReceiver(
 				startTime,
@@ -657,9 +659,9 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 	/**
 	 * Compares the new timeline-state with the old one, and generates commands to account for the difference
 	 */
-	private _diffStates(oldState, newState, time: number): Array<AMCPCommandVOWithContext> {
+	private _diffStates(oldState: State, newState: State, time: number): Array<AMCPCommandVOWithContext> {
 		// @todo: this is a tmp fix for the command order. should be removed when ccg-state has been refactored.
-		return CasparCGState.diffStatesOrderedCommands(oldState, newState, time)
+		return CasparCGState.diffStatesOrderedCommands((oldState as unknown) as InternalState, newState, time)
 	}
 	private _doCommand(command: CommandNS.IAMCPCommand, context: string, timlineObjId: string): Promise<void> {
 		const time = this.getCurrentTime()
@@ -773,7 +775,7 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 	): Promise<any> {
 		// do no retry while we are sending commands, instead always retry closely after:
 		if (!context.match(/\[RETRY\]/i)) {
-			clearTimeout(this._retryTimeout)
+			if (this._retryTimeout) clearTimeout(this._retryTimeout)
 			if (this._retryTime) this._retryTimeout = setTimeout(() => this._assertIntendedState(), this._retryTime)
 		}
 
@@ -839,8 +841,12 @@ export class CasparCGDevice extends DeviceWithState<State> implements IDevice {
 				if (cmd.name) {
 					errorString += ` ${cmd.name} `
 				}
-				if (cmd['_objectParams'] && !_.isEmpty(cmd['_objectParams'])) {
-					errorString += ', params: ' + JSON.stringify(cmd['_objectParams'])
+				if (
+					((cmd as unknown) as AMCPCommandVOWithContext)['_objectParams'] &&
+					!_.isEmpty(((cmd as unknown) as AMCPCommandVOWithContext)['_objectParams'])
+				) {
+					errorString +=
+						', params: ' + JSON.stringify(((cmd as unknown) as AMCPCommandVOWithContext)['_objectParams'])
 				} else if (cmd.payload && !_.isEmpty(cmd.payload)) {
 					errorString += ', payload: ' + JSON.stringify(cmd.payload)
 				}

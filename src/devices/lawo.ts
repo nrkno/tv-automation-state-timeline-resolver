@@ -17,6 +17,7 @@ import {
 	ContentTimelineObjLawoSource,
 	MappingLawoType,
 	Mappings,
+	TimelineObjLawoSourceDeprecated,
 } from '../types/src'
 import { TimelineState, ResolvedTimelineObjectInstance } from 'superfly-timeline'
 import { DoOnTime, SendMode } from '../doOnTime'
@@ -76,11 +77,11 @@ export class LawoDevice extends DeviceWithState<LawoState> implements IDevice {
 
 	private _commandReceiver: CommandReceiver
 	private _sourcesPath: string
-	private _rampMotorFunctionPath: string = ''
+	private _rampMotorFunctionPath = ''
 	private _dbPropertyName: string
 	private _setValueFn: SetLawoValueFn
 	private _faderIntervalTime: number
-	private _faderThreshold: number = -60
+	private _faderThreshold = -60
 	private _sourceNamePath: string | undefined
 
 	private _sourceNameToNodeName = new Map<string, string>()
@@ -344,7 +345,9 @@ export class LawoDevice extends DeviceWithState<LawoState> implements IDevice {
 					// TODO - next breaking change, remove deprecated tlObject typings "Fader/Motor dB Value"
 					if ('Fader/Motor dB Value' in tlObjectSource.content) {
 						fader = {
+							// @ts-expect-error: deprecated API
 							faderValue: tlObjectSource.content['Fader/Motor dB Value'].value,
+							// @ts-expect-error: deprecated API
 							transitionDuration: tlObjectSource.content['Fader/Motor dB Value'].transitionDuration,
 						}
 					}
@@ -575,7 +578,7 @@ export class LawoDevice extends DeviceWithState<LawoState> implements IDevice {
 							6: 'Combination of values not allowed',
 							7: 'Touch active',
 						}
-						const result = res.result![0].value as number
+						const result = (res.result![0].value as number) as keyof typeof reasons
 
 						if (
 							res.result &&
@@ -709,9 +712,9 @@ export class LawoDevice extends DeviceWithState<LawoState> implements IDevice {
 					let previousNode: string | undefined = undefined
 					const node = await this._lawo.getElementByPath(
 						this._sourcesPath + '.' + child.number + '.' + this._sourceNamePath,
-						(node: EmberModel.NumberedTreeNode<EmberModel.Parameter>) => {
+						(node) => {
 							// identifier changed
-							if (!node) return
+							if (!node || node.contents.type !== EmberModel.ElementType.Parameter) return
 
 							const sourceId = (child.contents as EmberModel.EmberNode).identifier || child.number + ''
 

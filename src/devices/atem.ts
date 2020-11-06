@@ -1,5 +1,5 @@
 import _ from 'underscore'
-import * as underScoreDeepExtend from 'underscore-deep-extend'
+import underScoreDeepExtend from 'underscore-deep-extend'
 import { DeviceWithState, CommandWithContext, DeviceStatus, StatusCode, IDevice } from './device'
 import {
 	DeviceType,
@@ -80,6 +80,9 @@ export class AtemDevice extends DeviceWithState<DeviceState> implements IDevice 
 			this._deviceOptions
 		)
 		this.handleDoOnTime(this._doOnTime, 'Atem')
+
+		this._state = new AtemState()
+		this._atem = new AtemConnection.BasicAtem()
 	}
 
 	/**
@@ -89,8 +92,6 @@ export class AtemDevice extends DeviceWithState<DeviceState> implements IDevice 
 	init(options: AtemOptions): Promise<boolean> {
 		return new Promise((resolve, reject) => {
 			// This is where we would do initialization, like connecting to the devices, etc
-			this._state = new AtemState()
-			this._atem = new AtemConnection.BasicAtem()
 			this._atem.once('connected', () => {
 				// check if state has been initialized:
 				this._connected = true

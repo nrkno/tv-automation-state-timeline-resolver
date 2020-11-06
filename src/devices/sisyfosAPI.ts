@@ -6,8 +6,8 @@ const CONNECTIVITY_INTERVAL = 3000 // ms
 const CONNECTIVITY_TIMEOUT = 1000 // ms
 
 export class SisyfosApi extends EventEmitter {
-	host: string = ''
-	port: number = 0
+	host = ''
+	port = 0
 
 	private _oscClient: osc.UDPPort = new osc.UDPPort({})
 	private _state?: SisyfosState

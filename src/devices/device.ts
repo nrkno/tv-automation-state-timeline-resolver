@@ -134,9 +134,9 @@ export abstract class Device extends EventEmitter implements IDevice {
 	}
 
 	/** Called from Conductor when a new state is about to be handled soon */
-	abstract prepareForHandleState(newStateTime: number)
+	abstract prepareForHandleState(newStateTime: number): void
 	/** Called from Conductor when a new state is to be handled */
-	abstract handleState(newState: TimelineState, mappings: Mappings)
+	abstract handleState(newState: TimelineState, mappings: Mappings): void
 
 	/** To be called by children first in .handleState */
 	protected onHandleState(_newState: TimelineState, mappings: Mappings) {
@@ -146,7 +146,7 @@ export abstract class Device extends EventEmitter implements IDevice {
 	 * Clear any scheduled commands after this time
 	 * @param clearAfterTime
 	 */
-	abstract clearFuture(clearAfterTime: number)
+	abstract clearFuture(clearAfterTime: number): void
 	abstract get canConnect(): boolean
 	abstract get connected(): boolean
 

@@ -32,7 +32,7 @@ type TSCSendState = TimelineState
  */
 export class TCPSendDevice extends DeviceWithState<TSCSendState> implements IDevice {
 	private _makeReadyCommands: TcpSendCommandContent[] = []
-	private _makeReadyDoesReset: boolean = false
+	private _makeReadyDoesReset = false
 
 	private _doOnTime: DoOnTime
 	private _tcpClient: Socket | null = null

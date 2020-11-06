@@ -57,16 +57,16 @@ type CommandContext = any
 export class HyperdeckDevice extends DeviceWithState<DeviceState> implements IDevice {
 	private _doOnTime: DoOnTime
 
-	private _hyperdeck: Hyperdeck
+	private _hyperdeck = new Hyperdeck({ pingPeriod: 1000 })
 	private _initialized = false
 	private _connected = false
 
-	private _recordingTime: number
-	private _minRecordingTime: number // 15 minutes
-	private _recTimePollTimer: NodeJS.Timer
+	private _recordingTime?: number
+	private _minRecordingTime?: number // 15 minutes
+	private _recTimePollTimer?: NodeJS.Timer
 	private _slots = 0
-	private _slotStatus = {}
-	private _transportStatus: TransportStatus
+	private _slotStatus: Record<number, HyperdeckCommands.SlotInfoCommandResponse> = {}
+	private _transportStatus?: TransportStatus
 
 	private _commandReceiver: CommandReceiver
 
@@ -188,7 +188,7 @@ export class HyperdeckDevice extends DeviceWithState<DeviceState> implements IDe
 	 * calls this._queryRecordingTime
 	 */
 	async formatDisks() {
-		const wait = (t) => new Promise((resolve) => setTimeout(() => resolve(), t))
+		const wait = (t: number) => new Promise((resolve) => setTimeout(() => resolve(), t))
 
 		for (let i = 1; i <= this._slots; i++) {
 			// select slot
@@ -330,7 +330,7 @@ export class HyperdeckDevice extends DeviceWithState<DeviceState> implements IDe
 
 		if (this._connected) {
 			// check recording time left
-			if (this._minRecordingTime && this._recordingTime < this._minRecordingTime) {
+			if (this._minRecordingTime && this._recordingTime && this._recordingTime < this._minRecordingTime) {
 				if (this._recordingTime === 0) {
 					statusCode = StatusCode.BAD
 				} else {
@@ -412,7 +412,10 @@ export class HyperdeckDevice extends DeviceWithState<DeviceState> implements IDe
 				timelineObjId: string
 			} | null = null
 
-			const keys = _.unique(_.keys(oldHyperdeckState.notify).concat(_.keys(newHyperdeckState.notify)))
+			const keys: Set<keyof HyperdeckCommands.NotifyCommandResponse> = new Set([
+				...Object.keys(oldHyperdeckState.notify),
+				...Object.keys(newHyperdeckState.notify),
+			]) as any
 			for (const k of keys) {
 				if (oldHyperdeckState.notify[k] !== newHyperdeckState.notify[k]) {
 					notifyCmd[k] = newHyperdeckState.notify[k]
@@ -563,7 +566,7 @@ export class HyperdeckDevice extends DeviceWithState<DeviceState> implements IDe
 		}
 
 		let timeTillNextUpdate = 10
-		if (time > 10) {
+		if (time > 10 && this._minRecordingTime) {
 			if (time - this._minRecordingTime > 10) {
 				timeTillNextUpdate = (time - this._minRecordingTime) / 2
 			} else if (time - this._minRecordingTime < 0) {

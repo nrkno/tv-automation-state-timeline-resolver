@@ -29,8 +29,8 @@ type HTTPSendState = TimelineState
  * This is a HTTPSendDevice, it sends http commands when it feels like it
  */
 export class HTTPSendDevice extends DeviceWithState<HTTPSendState> implements IDevice {
-	private _makeReadyCommands: HTTPSendCommandContent[]
-	private _makeReadyDoesReset: boolean
+	private _makeReadyCommands: HTTPSendCommandContent[] = []
+	private _makeReadyDoesReset = false
 	private _doOnTime: DoOnTime
 
 	private _commandReceiver: CommandReceiver
@@ -221,7 +221,7 @@ export class HTTPSendDevice extends DeviceWithState<HTTPSendState> implements ID
 		this.emit('debug', cwc)
 
 		return new Promise((resolve, reject) => {
-			const handleResponse = (error, response) => {
+			const handleResponse = (error: Error, response: request.Response) => {
 				if (error) {
 					this.emit('error', `HTTPSend.response error ${cmd.type} (${context}`, error)
 					reject(error)

@@ -7,8 +7,8 @@ const RETRY_TIMEOUT = 5000 // ms
 export class ShotokuAPI extends EventEmitter {
 	private _tcpClient?: Socket | undefined = undefined
 	private _connected = false
-	private _host: string = ''
-	private _port: number = 0
+	private _host = ''
+	private _port = 0
 	private _setDisconnected = false // set to true if disconnect() has been called (then do not trye to reconnect)
 	private _retryConnectTimeout: NodeJS.Timer | undefined
 

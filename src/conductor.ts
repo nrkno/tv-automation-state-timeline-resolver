@@ -26,7 +26,7 @@ import { VMixDevice, DeviceOptionsVMixInternal } from './devices/vmix'
 
 import { VizMSEDevice, DeviceOptionsVizMSEInternal } from './devices/vizMSE'
 import PQueue from 'p-queue'
-import * as PAll from 'p-all'
+import PAll from 'p-all'
 import PTimeout from 'p-timeout'
 import { ShotokuDevice, DeviceOptionsShotokuInternal } from './devices/shotoku'
 
@@ -702,7 +702,7 @@ export class Conductor extends EventEmitter {
 			// To prevent trying to transfer circular references over IPC we remove
 			// any references to the parent property:
 			const deleteParent = (o: TimelineObject) => {
-				delete o['parent']
+				if ('parent' in o) delete o['parent']
 			}
 			_.each(timeline, (o) => applyRecursively(o, deleteParent))
 
@@ -762,15 +762,16 @@ export class Conductor extends EventEmitter {
 						layers: layersPerDevice[device.deviceId] || {},
 						nextEvents: [],
 					}
-					const removeParent = (o: TimelineState) => {
+					const removeParent = <T extends Record<string, any>>(o: T): Omit<T, 'parent'> => {
+						if ('parent' in o) {
+							delete o['parent']
+						}
 						for (const key in o) {
-							if (key === 'parent') {
-								delete o['parent']
-							} else if (typeof o[key] === 'object') {
-								o[key] = removeParent(o[key])
+							if (typeof o[key] === 'object') {
+								removeParent(o[key])
 							}
 						}
-						return o
+						return o as any
 					}
 
 					// Pass along the state to the device, it will generate its commands and execute them:
@@ -960,16 +961,17 @@ export class Conductor extends EventEmitter {
 	}
 	private _queueCallback(playing: boolean, cb: QueueCallback) {
 		let o: CallbackInstance
+		const instanceId = parseInt(cb.instanceId)
 
-		if (this._callbackInstances[cb.instanceId]) {
-			o = this._callbackInstances[cb.instanceId]
+		if (this._callbackInstances[instanceId]) {
+			o = this._callbackInstances[instanceId]
 		} else {
 			o = {
 				playing: undefined,
 				playChanged: false,
 				endChanged: false,
 			}
-			this._callbackInstances[cb.instanceId] = o
+			this._callbackInstances[instanceId] = o
 		}
 
 		if (o.playing !== playing) {
@@ -1029,7 +1031,6 @@ export class Conductor extends EventEmitter {
 		let haveThingsToSendLater = false
 
 		const callbacks: QueueCallback[] = []
-
 		_.each(this._callbackInstances, (o: CallbackInstance, instanceId: string) => {
 			if (o.endChanged && o.endTime && o.endCallback) {
 				if (o.endTime < now - CALLBACK_WAIT_TIME) {
@@ -1050,7 +1051,7 @@ export class Conductor extends EventEmitter {
 			}
 
 			if (!haveThingsToSendLater && !o.playChanged && !o.endChanged) {
-				delete this._callbackInstances[instanceId]
+				delete this._callbackInstances[(instanceId as unknown) as keyof Conductor['_callbackInstances']]
 			}
 		})
 
