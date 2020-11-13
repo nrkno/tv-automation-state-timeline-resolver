@@ -565,7 +565,7 @@ class QuantelManager extends EventEmitter {
 	}
 	private _cache = new Cache()
 	private _waitWithPorts: {
-		[portId: string]: Function[]
+		[portId: string]: ((returnValue: boolean) => void)[]
 	} = {}
 	constructor (
 		private _quantel: QuantelGateway,
@@ -781,7 +781,6 @@ class QuantelManager extends EventEmitter {
 		await this.prepareClipJump(cmd, 'pause')
 	}
 	public async clearClip (cmd: QuantelCommandClearClip): Promise<void> {
-
 		// Fetch tracked reference to the loaded clip:
 		const trackedPort = this.getTrackedPort(cmd.portId)
 		if (cmd.transition) {
@@ -802,7 +801,6 @@ class QuantelManager extends EventEmitter {
 		trackedPort.scheduledStop = null
 	}
 	private async prepareClipJump (cmd: QuantelCommandClip, alsoDoAction?: 'play' | 'pause'): Promise<void> {
-
 		// Fetch tracked reference to the loaded clip:
 		const trackedPort = this.getTrackedPort(cmd.portId)
 		if (cmd.transition) {
@@ -1046,9 +1044,10 @@ class QuantelManager extends EventEmitter {
 		})
 	}
 	public clearAllWaitWithPort (portId: string) {
-		if (!this._waitWithPorts[portId]) {
-			_.each(this._waitWithPorts[portId], fcn => {
-				fcn(true)
+		const resolveFcns = this._waitWithPorts[portId]
+		if (resolveFcns) {
+			_.each(resolveFcns, resolveFcn => {
+				resolveFcn(true)
 			})
 		}
 	}
