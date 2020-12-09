@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.2.0](https://github.com/nrkno/tv-automation-state-timeline-resolver/compare/5.1.2...5.2.0) (2020-12-08)
+
+
+### Features
+
+* **casparcg:** FFMpeg filter strings for audio and video ([4f332a7](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/4f332a73ff8235031bbbc8108679f90abd645e03))
+* add support for running internal transitions for casparCG ([4b0443c](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/4b0443c8fbcd804802df2afab7613619cb26071d))
+* continued implementation of internal transitions. add support for MIX, PERSPECTIVE and a hack to combinate with opacity and volume [publish] ([c424637](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/c424637b81f4eb11286ec2b876685a6f94d30190))
+* set casparcg fps in device options ([e2a15b5](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/e2a15b5a85698d9d3f2db756b8f582a7a2644b34))
+
+
+### Bug Fixes
+
+* add getThreadsMemoryUsage method, for troubleshooting memory issues ([091f9da](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/091f9da28d22b7c89000daeb23c9f9dd94bf2e2a))
+* don't delete property which is not optional ([5617750](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/561775063cdadebdee82940d5ea2a8af50be177e))
+* transition properties should be optional ([2d2fb87](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/2d2fb87f831eca85dbf38a75d0ee22216d27c753))
+* update threadedclass dependency to 0.8.1 ([1bf2d5a](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/1bf2d5aeb894a7b251df8ed572e2a3fc838476fb))
+* wrong prop value ([dd5ff81](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/dd5ff81ff0e20f26a8525e20db0809f6fca3334d))
+
+### [5.1.2](https://github.com/nrkno/tv-automation-state-timeline-resolver/compare/5.1.1...5.1.2) (2020-11-10)
+
+
+### Bug Fixes
+
+* **casparcg:** allow transitions to be defined on html pages [publish] ([492901b](https://github.com/nrkno/tv-automation-state-timeline-resolver/commit/492901be44d37e117788e8caf7ec8a09f744986a))
+
 ### [5.1.1](https://github.com/nrkno/tv-automation-state-timeline-resolver/compare/5.1.0...5.1.1) (2020-10-19)
 
 
