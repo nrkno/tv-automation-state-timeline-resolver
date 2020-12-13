@@ -183,6 +183,9 @@ export class Conductor extends EventEmitter {
 			})
 		}
 
+		// Test: see what happens if we dont' handle the exit signal at all:
+		ThreadedClassManager.dontHandleExit = true
+
 	}
 	/**
 	 * Initializates the resolver, with optional multithreading
