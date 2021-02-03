@@ -515,7 +515,7 @@ describe('Conductor', () => {
 
 		// modify the mapping:
 		myLayerMapping0.layer = 20
-		conductor.setTimelineAndMappings(conductor.timeline, myLayerMapping)
+		conductor.setTimelineAndMappings(timeline, myLayerMapping)
 
 		await mockTime.advanceTimeTicks(100) // just a little bit
 

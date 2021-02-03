@@ -1,9 +1,7 @@
 import * as _ from 'underscore'
 import {
 	TimelineState,
-	ResolvedTimelineObjectInstance,
-	ResolvedStates,
-	TimelineObject
+	ResolvedTimelineObjectInstance
 } from 'superfly-timeline'
 
 import { CommandWithContext } from './devices/device'
@@ -114,8 +112,8 @@ export interface StatReport {
 export class Conductor extends EventEmitter {
 
 	private _logDebug: boolean = false
-	private _timeline: TSRTimeline = []
 	private _mappings: Mappings = {}
+	private _timelineLength: number = 0
 
 	private _options: ConductorOptions
 
@@ -124,13 +122,6 @@ export class Conductor extends EventEmitter {
 	private _getCurrentTime?: () => number
 
 	private _nextResolveTime: number = 0
-	private _resolvedStates: {
-		resolvedStates: ResolvedStates | null,
-		resolveTime: number
-	} = {
-		resolvedStates: null,
-		resolveTime: 0
-	}
 	private _resolveTimelineTrigger: NodeJS.Timer
 	private _isInitialized: boolean = false
 	private _doOnTime: DoOnTime
@@ -164,7 +155,7 @@ export class Conductor extends EventEmitter {
 		if (options.getCurrentTime) this._getCurrentTime = options.getCurrentTime
 
 		this._interval = setInterval(() => {
-			if (this.timeline) {
+			if (this._timelineLength > 0) {
 				this._resolveTimeline()
 			}
 		}, 2500)
@@ -203,7 +194,7 @@ export class Conductor extends EventEmitter {
 		)
 
 		this._isInitialized = true
-		this.resetResolver()
+		this.resetResolver(null)
 	}
 	/**
 	 * Returns a nice, synchronized time.
@@ -224,24 +215,18 @@ export class Conductor extends EventEmitter {
 		return this._mappings
 	}
 	/**
-	 * Returns the current timeline
-	 */
-	get timeline (): TSRTimeline {
-		return this._timeline
-	}
-	/**
 	 * Sets a new timeline and resets the resolver.
 	 */
 	setTimelineAndMappings (timeline: TSRTimeline, mappings?: Mappings) {
 		this.statStartMeasure('timeline received')
-		this._timeline = timeline
+		this._timelineLength = timeline.length
 		if (mappings) this._mappings = mappings
 
 		// We've got a new timeline, anything could've happened at this point
 		// Highest priority right now is to determine if any commands have to be sent RIGHT NOW
 		// After that, we'll move further ahead in time, creating commands ready for scheduling
 
-		this.resetResolver()
+		this.resetResolver(timeline)
 
 	}
 	get timelineHash (): string | undefined {
@@ -455,7 +440,7 @@ export class Conductor extends EventEmitter {
 				}
 			}).catch(console.error)
 
-			newDevice.device.on('resetResolver', () => this.resetResolver()).catch(console.error)
+			newDevice.device.on('resetResolver', () => this.resetResolver(null)).catch(console.error)
 
 			// Temporary listening to events, these are removed after the devide has been initiated.
 			// Todo: split the addDevice function into two separate functions, so that the device is
@@ -531,13 +516,17 @@ export class Conductor extends EventEmitter {
 	 * Resets the resolve-time, so that the resolving will happen for the point-in time NOW
 	 * next time
 	 */
-	public resetResolver () {
+	public resetResolver (timeline: TSRTimeline | null) {
 		// reset the resolver through the action queue to make sure it is reset after any currently running timelineResolves
+		this._actionQueue.clear()
 		this._actionQueue.add(async () => {
 			this._nextResolveTime = 0 // This will cause _resolveTimeline() to generate the state for NOW
-			this._resolvedStates = {
-				resolvedStates: null,
-				resolveTime: 0
+			if (this._resolver) {
+				if (timeline) {
+					await this._resolver.newTimeline(timeline)
+				} else {
+					await this._resolver.resetResolvedState()
+				}
 			}
 		}).catch(() => {
 			this.emit('error', 'Failed to reset the resolvedStates, timeline may not be updated appropriately!')
@@ -635,14 +624,14 @@ export class Conductor extends EventEmitter {
 			/** The point in time we're targeting. (This can be in the future) */
 			let resolveTime: number = this._nextResolveTime
 
-			const estimatedResolveTime = this.estimateResolveTime()
+			const estimatedResolveDuration = this.estimateResolveDuration()
 
 			if (
 				resolveTime === 0 || // About to be resolved ASAP
-				resolveTime < now + estimatedResolveTime // We're late
+				resolveTime < now + estimatedResolveDuration // We're late
 			) {
-				resolveTime = now + estimatedResolveTime
-				this.emit('debug', `resolveTimeline ${resolveTime} (${resolveTime - now} from now) (${estimatedResolveTime}) ---------`)
+				resolveTime = now + estimatedResolveDuration
+				this.emit('debug', `resolveTimeline ${resolveTime} (${resolveTime - now} from now) (${estimatedResolveDuration}) ---------`)
 			} else {
 				this.emit('debug', `resolveTimeline ${resolveTime} (${resolveTime - now} from now) -----------------------------`)
 
@@ -671,64 +660,12 @@ export class Conductor extends EventEmitter {
 				this.emit('error', error)
 			})
 
-			const applyRecursively = (o: TimelineObject, func: (o: TimelineObject) => void) => {
-				func(o)
-
-				if (o.isGroup) {
-					_.each(o.children || [], (child: TimelineObject) => {
-						applyRecursively(child, func)
-					})
-				}
-			}
-
 			statTimeTimelineStartResolve = Date.now()
-			let timeline: TSRTimeline = this.timeline
 
-			// To prevent trying to transfer circular references over IPC we remove
-			// any references to the parent property:
-			const deleteParent = (o: TimelineObject) => { delete o['parent'] }
-			_.each(timeline, (o) => applyRecursively(o, deleteParent))
-
-			// Determine if we can use the pre-resolved timeline:
-			let resolvedStates: ResolvedStates
-			if (
-				this._resolvedStates.resolvedStates &&
-				resolveTime >= this._resolvedStates.resolveTime &&
-				resolveTime < this._resolvedStates.resolveTime + RESOLVE_LIMIT_TIME
-			) {
-				// Yes, we can use the previously resolved timeline:
-				resolvedStates = this._resolvedStates.resolvedStates
-			} else {
-				// No, we need to resolve the timeline again:
-				let o = await this._resolver.resolveTimeline(
-					resolveTime,
-					timeline,
-					resolveTime + RESOLVE_LIMIT_TIME,
-					this._useCacheWhenResolving
-				)
-				resolvedStates = o.resolvedStates
-
-				this._resolvedStates.resolvedStates = resolvedStates
-				this._resolvedStates.resolveTime = resolveTime
-
-				// Apply changes to fixed objects (set "now" triggers to an actual time):
-				// This gets persisted on this.timeline, so we only have to do this once
-				const nowIdsTime: {[id: string]: number} = {}
-				_.each(o.objectsFixed, (o) => nowIdsTime[o.id] = o.time)
-				const fixNow = (o: TimelineObject) => {
-					if (nowIdsTime[o.id]) {
-						if (!_.isArray(o.enable)) {
-							o.enable.start = nowIdsTime[o.id]
-						}
-					}
-				}
-				_.each(timeline, (o) => applyRecursively(o, fixNow))
-
-			}
-
-			let tlState = await this._resolver.getState(
-				resolvedStates,
-				resolveTime
+			const tlState = await this._resolver.getState(
+				resolveTime,
+				RESOLVE_LIMIT_TIME,
+				this._useCacheWhenResolving
 			)
 			await pPrepareForHandleStates
 
@@ -857,7 +794,7 @@ export class Conductor extends EventEmitter {
 				this.emit('resolveDone', this._timelineHash, resolveDuration)
 			}
 
-			this.emit('debug', 'resolveTimeline at time ' + resolveTime + ' done in ' + resolveDuration + 'ms (size: ' + timeline.length + ')')
+			this.emit('debug', 'resolveTimeline at time ' + resolveTime + ' done in ' + resolveDuration + 'ms (size: ' + tlState.timelineLength + ')')
 		} catch (e) {
 			this.emit('error', 'resolveTimeline' + e + '\nStack: ' + e.stack)
 		}
@@ -883,9 +820,9 @@ export class Conductor extends EventEmitter {
 	 * objects on the timeline. If the proActiveResolve option is falsy this
 	 * returns 0.
 	 */
-	estimateResolveTime (): any {
+	estimateResolveDuration (): any {
 		if (this._options.proActiveResolve) {
-			let objectCount = this.timeline.length
+			let objectCount = this._timelineLength
 
 			let sizeFactor = Math.pow(objectCount / 50, 0.5) * 50 // a pretty nice-looking graph that levels out when objectCount is larger
 			return (

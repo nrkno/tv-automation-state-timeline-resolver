@@ -12,44 +12,98 @@ import {
 } from './conductor'
 import { TSRTimeline, TSRTimelineObj } from './types/src'
 
+const applyRecursively = (o: TimelineObject, func: (o: TimelineObject) => void) => {
+	func(o)
+
+	if (o.isGroup) {
+		_.each(o.children || [], (child: TimelineObject) => {
+			applyRecursively(child, func)
+		})
+	}
+}
+
 export class AsyncResolver {
 
 	private readonly onSetTimelineTriggerTime: (res: TimelineTriggerTimeResult) => void
 
 	private cache: ResolverCache = {}
 
+	private _timeline: TSRTimeline = []
+	private _resolvedStates: {
+		resolvedStates: ResolvedStates | null,
+		resolveTime: number
+	} = {
+		resolvedStates: null,
+		resolveTime: 0
+	}
+
 	public constructor (onSetTimelineTriggerTime: (res: TimelineTriggerTimeResult) => void) {
 		this.onSetTimelineTriggerTime = onSetTimelineTriggerTime
 	}
 
-	public async resolveTimeline (
-		resolveTime: number,
-		timeline: TSRTimeline,
-		limitTime: number,
-		useCache: boolean
-	) {
-
-		let objectsFixed = this._fixNowObjects(timeline, resolveTime)
-
-		const resolvedTimeline = Resolver.resolveTimeline(timeline, {
-			limitCount: 999,
-			limitTime: limitTime,
-			time: resolveTime,
-			cache: useCache ? this.cache : undefined
-		})
-
-		const resolvedStates = Resolver.resolveAllStates(resolvedTimeline)
-
-		return {
-			resolvedStates,
-			objectsFixed
+	public async newTimeline (timeline: TSRTimeline) {
+		this._timeline = timeline
+		await this.resetResolvedState()
+	}
+	public async resetResolvedState () {
+		this._resolvedStates = {
+			resolvedStates: null,
+			resolveTime: 0
 		}
 	}
-	public async getState (
-		resolved: ResolvedStates,
-		resolveTime: number
-	) {
-		return Resolver.getState(resolved, resolveTime)
+
+	public async getState (resolveTime: number, limitTime: number, useCache: boolean) {
+		const timeline = this._timeline
+		// To prevent trying to transfer circular references over IPC we remove
+		// any references to the parent property:
+		const deleteParent = (o: TimelineObject) => { delete o['parent'] }
+		_.each(timeline, (o) => applyRecursively(o, deleteParent))
+
+		// Determine if we can use the pre-resolved timeline:
+		let resolvedStates: ResolvedStates
+		if (
+			this._resolvedStates.resolvedStates &&
+			resolveTime >= this._resolvedStates.resolveTime &&
+			resolveTime < this._resolvedStates.resolveTime + limitTime
+		) {
+			// Yes, we can use the previously resolved timeline:
+			resolvedStates = this._resolvedStates.resolvedStates
+		} else {
+			// No, we need to resolve the timeline again:
+			const objectsFixed = this._fixNowObjects(timeline, resolveTime)
+
+			const resolvedTimeline = Resolver.resolveTimeline(timeline, {
+				limitCount: 999,
+				limitTime: limitTime,
+				time: resolveTime,
+				cache: useCache ? this.cache : undefined
+			})
+
+			resolvedStates = Resolver.resolveAllStates(resolvedTimeline)
+
+			this._resolvedStates.resolvedStates = resolvedStates
+			this._resolvedStates.resolveTime = resolveTime
+
+			// Apply changes to fixed objects (set "now" triggers to an actual time):
+			// This gets persisted on this.timeline, so we only have to do this once
+			const nowIdsTime: {[id: string]: number} = {}
+			_.each(objectsFixed, (o) => nowIdsTime[o.id] = o.time)
+			const fixNow = (o: TimelineObject) => {
+				if (nowIdsTime[o.id]) {
+					if (!_.isArray(o.enable)) {
+						o.enable.start = nowIdsTime[o.id]
+					}
+				}
+			}
+			_.each(timeline, (o) => applyRecursively(o, fixNow))
+
+		}
+
+		const state = Resolver.getState(resolvedStates, resolveTime)
+		return {
+			...state,
+			timelineLength: timeline.length
+		}
 	}
 
 	private _fixNowObjects (timeline: TSRTimeline, now: number): TimelineTriggerTimeResult {

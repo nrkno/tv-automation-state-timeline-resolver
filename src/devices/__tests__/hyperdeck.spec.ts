@@ -130,7 +130,7 @@ describe('Hyperdeck', () => {
 			filename: 'sofie_dev'
 		})
 
-		myConductor.setTimelineAndMappings(myConductor.timeline) // Same timeline
+		myConductor.resetResolver(null)
 		await mockTime.advanceTimeToTicks(10400)
 		expect(hyperdeckMockCommand).toHaveBeenCalledTimes(1) // nothing has changed, so it should not be called again
 
