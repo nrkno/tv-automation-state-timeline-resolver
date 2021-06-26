@@ -98,10 +98,21 @@ enum PanasonicHttpCommands {
 	PRESET_NUMBER_QUERY = '#S',
 	PRESET_SPEED_CONTROL_TPL = '#UPVS%03i',
 	PRESET_SPEED_QUERY = '#UPVS',
+
 	ZOOM_SPEED_CONTROL_TPL = '#Z%02i',
 	ZOOM_SPEED_QUERY = '#Z',
 	ZOOM_CONTROL_TPL = '#AXZ%03X',
-	ZOOM_QUERY = '#GZ'
+	ZOOM_QUERY = '#GZ',
+
+	FOCUS_SPEED_CONTROL_TPL = '#F%02i',
+	FOCUS_SPEED_QUERY = '#F',
+	FOCUS_CONTROL_TPL = '#AXF%03X',
+	FOCUS_QUERY = '#GF',
+
+	IRIS_SPEED_CONTROL_TPL = '#I%02i',
+	IRIS_SPEED_QUERY = '#I',
+	IRIS_CONTROL_TPL = '#AXI%03X',
+	IRIS_QUERY = '#GI'
 }
 enum PanasonicHttpResponse {
 	POWER_MODE_ON = 'p1',
@@ -114,6 +125,14 @@ enum PanasonicHttpResponse {
 	ZOOM_SPEED_TPL = 'zS',
 	ZOOM_TPL = 'gz',
 	ZOOM_CONTROL_TPL = 'axz',
+
+	FOCUS_SPEED_TPL = 'fS',
+	FOCUS_TPL = 'gf',
+	FOCUS_CONTROL_TPL = 'axf',
+
+	IRIS_SPEED_TPL = 'iS',
+	IRIS_TPL = 'gi',
+	IRIS_CONTROL_TPL = 'axi',
 
 	ERROR_1 = 'E1',
 	ERROR_2 = 'E2',
@@ -360,6 +379,222 @@ export class PanasonicPtzHttpInterface extends EventEmitter {
 					resolve(level)
 				} else {
 					reject(`Unknown response to setZoom: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Get camera lens focus speed (essentially, current virtual focus rocker position)
+	 * @returns {Promise<number>} A promise: the speed at which the lens is changing it's focus
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	getFocusSpeed (): Promise<number> {
+		const device = this._device
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(PanasonicHttpCommands.FOCUS_SPEED_QUERY).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.FOCUS_SPEED_TPL)) {
+					const speed = Number.parseInt(response.substr(PanasonicHttpResponse.FOCUS_SPEED_TPL.length), 10)
+					resolve(speed)
+				} else {
+					reject(`Unknown response to getFocusSpeed: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Set camera lens focus speed (essentially, current virtual focus rocker position)
+	 * @param {number} speed Speed to be set for the camera focus. Acceptable values are 1-99. 50 is focus stop, 49 is slowest WIDE, 51 is slowest TELE, 1 is fastest WIDE, 99 is fastest TELE
+	 * @returns {Promise<number>} A promise: the speed at which the lens is changing it's focus
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	setFocusSpeed (speed: number): Promise<number> {
+		const device = this._device
+
+		if (!_.isFinite(speed)) throw new Error('Camera focus speed is not a finite number')
+		if ((speed < 1 || speed > 99)) throw new Error('Camera focus speed must be between 1 and 99')
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(sprintf(PanasonicHttpCommands.FOCUS_SPEED_CONTROL_TPL, speed)).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.FOCUS_SPEED_TPL)) {
+					const speed = Number.parseInt(response.substr(PanasonicHttpResponse.FOCUS_SPEED_TPL.length), 10)
+					resolve(speed)
+				} else {
+					reject(`Unknown response to setFocusSpeed: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Get camera lens focus (an absolute number)
+	 * @returns {Promise<number>} A promise: current lens focus
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	getFocus (): Promise<number> {
+		const device = this._device
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(PanasonicHttpCommands.FOCUS_QUERY).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.FOCUS_TPL)) {
+					const focus = Number.parseInt(response.substr(PanasonicHttpResponse.FOCUS_TPL.length), 16)
+					resolve(focus)
+				} else {
+					reject(`Unknown response to getFocus: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Set camera lens focus (an absolute number)
+	 * @param {number} level The focus level to set the lens to
+	 * @returns {Promise<number>} A promise: current lens focus
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	setFocus (level: number): Promise<number> {
+		const device = this._device
+
+		if (!_.isFinite(level)) throw new Error('Camera focus speed is not a finite number')
+		if ((level < 0x555 || level > 0xFFF)) throw new Error('Camera focus speed must be between 1365 and 4095')
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(sprintf(PanasonicHttpCommands.FOCUS_CONTROL_TPL, level)).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.FOCUS_CONTROL_TPL)) {
+					const level = Number.parseInt(response.substr(PanasonicHttpResponse.FOCUS_CONTROL_TPL.length), 16)
+					resolve(level)
+				} else {
+					reject(`Unknown response to setFocus: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Get camera lens iris speed (essentially, current virtual iris rocker position)
+	 * @returns {Promise<number>} A promise: the speed at which the lens is changing it's iris
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	getIrisSpeed (): Promise<number> {
+		const device = this._device
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(PanasonicHttpCommands.IRIS_SPEED_QUERY).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.IRIS_SPEED_TPL)) {
+					const speed = Number.parseInt(response.substr(PanasonicHttpResponse.IRIS_SPEED_TPL.length), 10)
+					resolve(speed)
+				} else {
+					reject(`Unknown response to getIrisSpeed: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Set camera lens iris speed (essentially, current virtual iris rocker position)
+	 * @param {number} speed Speed to be set for the camera iris. Acceptable values are 1-99. 50 is iris stop, 49 is slowest WIDE, 51 is slowest TELE, 1 is fastest WIDE, 99 is fastest TELE
+	 * @returns {Promise<number>} A promise: the speed at which the lens is changing it's iris
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	setIrisSpeed (speed: number): Promise<number> {
+		const device = this._device
+
+		if (!_.isFinite(speed)) throw new Error('Camera iris speed is not a finite number')
+		if ((speed < 1 || speed > 99)) throw new Error('Camera iris speed must be between 1 and 99')
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(sprintf(PanasonicHttpCommands.IRIS_SPEED_CONTROL_TPL, speed)).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.IRIS_SPEED_TPL)) {
+					const speed = Number.parseInt(response.substr(PanasonicHttpResponse.IRIS_SPEED_TPL.length), 10)
+					resolve(speed)
+				} else {
+					reject(`Unknown response to setIrisSpeed: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Get camera lens iris (an absolute number)
+	 * @returns {Promise<number>} A promise: current lens iris
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	getIris (): Promise<number> {
+		const device = this._device
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(PanasonicHttpCommands.IRIS_QUERY).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.IRIS_TPL)) {
+					const iris = Number.parseInt(response.substr(PanasonicHttpResponse.IRIS_TPL.length), 16)
+					resolve(iris)
+				} else {
+					reject(`Unknown response to getIris: ${response}`)
+				}
+			}).catch((error) => {
+				this.emit('disconnected', error)
+				reject(error)
+			})
+		})
+	}
+
+	/**
+	 * Set camera lens iris (an absolute number)
+	 * @param {number} level The iris level to set the lens to
+	 * @returns {Promise<number>} A promise: current lens iris
+	 * @memberof PanasonicPtzHttpInterface
+	 */
+	setIris (level: number): Promise<number> {
+		const device = this._device
+
+		if (!_.isFinite(level)) throw new Error('Camera iris speed is not a finite number')
+		if ((level < 0x555 || level > 0xFFF)) throw new Error('Camera iris speed must be between 1365 and 4095')
+
+		return new Promise((resolve, reject) => {
+			device.sendCommand(sprintf(PanasonicHttpCommands.IRIS_CONTROL_TPL, level)).then((response) => {
+				if (PanasonicPtzHttpInterface._isError(response)) {
+					reject(`Device returned an error: ${response}`)
+				} else if (response.startsWith(PanasonicHttpResponse.IRIS_CONTROL_TPL)) {
+					const level = Number.parseInt(response.substr(PanasonicHttpResponse.IRIS_CONTROL_TPL.length), 16)
+					resolve(level)
+				} else {
+					reject(`Unknown response to setIris: ${response}`)
 				}
 			}).catch((error) => {
 				this.emit('disconnected', error)
