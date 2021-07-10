@@ -58,6 +58,7 @@ export class MockTime {
 		expect(this._now).toEqual(time)
 	}
 	tick = () => {
+		jest.advanceTimersByTime(0)
 		return new Promise(resolve => {
 			setImmediate(resolve)
 		})

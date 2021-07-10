@@ -302,4 +302,89 @@ describe('Atem', () => {
 		device.handleState(mockState, myLayerMapping)
 		expect(device.queue).toHaveLength(0)
 	})
+
+	test('Atem: handleState timing order', async () => {
+
+		const commandReceiver0 = jest.fn(() => {
+			return Promise.resolve()
+		})
+		const myLayerMapping: Mappings = {
+			'myLayer0': literal<MappingAtem>({
+				device: DeviceType.ATEM,
+				deviceId: 'myAtem',
+				mappingType: MappingAtemType.MixEffect,
+				index: 0
+			})
+		}
+
+		const resolvedObj: ResolvedTimelineObjectInstance = {
+			id: 'obj0',
+			enable: {
+				start: mockTime.now - 1000, // 1 seconds ago
+				duration: 0
+			},
+			layer: 'myLayer0',
+			content: {
+				type: TimelineContentTypeAtem.ME,
+				me: {
+					input: 4,
+					transition: Enums.TransitionStyle.CUT
+				}
+			},
+			resolved: {
+				resolved: true,
+				resolving: false,
+				instances: [{ start: mockTime.now - 1000, end: Infinity, id: 'a0', references: [] }]
+			},
+			instance: { start: mockTime.now - 1000, end: Infinity, id: 'a0', references: [] }
+		}
+		const mockState: TimelineState = {
+			time: mockTime.now,
+			layers: {
+				'myLayer0': resolvedObj
+			},
+			nextEvents: []
+		}
+
+		let device = new AtemDevice('mock', {
+			type: DeviceType.ATEM,
+			options: {
+				commandReceiver: commandReceiver0,
+				host: '127.0.0.1'
+			}
+		}, mockTime.getCurrentTime)
+		device.setMapping(myLayerMapping)
+
+		await device.init(literal<AtemOptions>({
+			host: '127.0.0.1'
+		}))
+
+		// Check that no commands has been scheduled
+		expect(device.queue).toHaveLength(0)
+		expect(commandReceiver0).toHaveBeenCalledTimes(0)
+
+		// Expect that a command has been scheduled
+		device.handleState(mockState)
+		expect(mockTime.getCurrentTime()).toEqual(10000)
+		expect(device.queue).toHaveLength(2)
+
+		// Handle the same state and time, before the commands have been sent
+		device.handleState(mockState)
+		expect(mockTime.getCurrentTime()).toEqual(10000)
+		expect(commandReceiver0).toHaveBeenCalledTimes(0)
+		expect(device.queue).toHaveLength(2)
+
+		// send the commands
+		mockTime.advanceTime(0)
+		await mockTime.tick()
+		expect(mockTime.getCurrentTime()).toEqual(10000)
+		expect(commandReceiver0).toHaveBeenCalledTimes(2)
+		expect(device.queue).toHaveLength(0)
+
+		// Handle the same state and time, now that the commands have been sent
+		device.handleState(mockState)
+		expect(mockTime.getCurrentTime()).toEqual(10000)
+		expect(commandReceiver0).toHaveBeenCalledTimes(2)
+		expect(device.queue).toHaveLength(0)
+	})
 })
